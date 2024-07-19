@@ -95,6 +95,9 @@ async def websocket_endpoint(websocket: WebSocket):
     # if not settings.OPENAI_API_KEY.startswith("sk-"):
     #     await websocket.send_json({"error": "OPENAI_API_KEY is not set"})
     #     return
+    """
+    直接串Ollama的post api
+    """
 
     while True:
         try:
