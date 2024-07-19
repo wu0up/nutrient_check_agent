@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = "A sample fastapi project created with create-fastapi-project"
+authors = [ "Your Name <your@email.com>",]
+readme = "README.md"
+[[tool.poetry.packages]]
+include = "app"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+mypy = "^1.10.1"
+ruff = "^0.5.3"
+black = "^24.4.2"
+
+[tool.black]
+line-length = 88
+target-version = [ "py37", "py38", "py39", "py310", "py311",]
+exclude = "((.eggs | .git | .pytest_cache | build | dist))"
+
+[tool.ruff]
+line-length = 88
+exclude = [ ".git", "__pycache__", ".mypy_cache", ".pytest_cache",]
+select = [ "E", "W", "F", "C", "B",]
+ignore = [ "B904", "B006", "E501", "B008", "C901",]
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [ "alembic", "__pycache__",]
+
+[tool.build-system]
+requires = [ "poetry-core",]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+fastapi = {extras = ["all"], version = "^0.111.1"}
+fastapi-pagination = {extras = ["sqlalchemy"], version = "^0.12.26"}
+asyncer = "^0.0.7"
+httpx = "^0.27.0"
+langchain = "^0.2.9"
+openai = "^1.35.15"
+adaptive-cards-py = "^0.0.8"
+google-search-results = "^2.4.2"
+langchain-community = "^0.2.7"
+langgraph = "^0.1.9"
+huggingface-hub = "^0.24.0"
+loguru = "^0.7.2"
+transformers = "^4.42.4"
+langchain-openai = "^0.1.17"
+langchain-experimental = "^0.0.62"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = [ "F401",]
