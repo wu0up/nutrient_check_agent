@@ -8,6 +8,7 @@ from app.utils.callback import (
     CustomAsyncCallbackHandler,
     CustomFinalStreamingStdOutCallbackHandler,
 )
+from app.core.config import settings as p
 # from app.utils.tools import (GeneralKnowledgeTool, ImageSearchTool,
 #                              PokemonSearchTool, YoutubeSearchTool,
 #                              GeneralWeatherTool, NutrientCalTool,
@@ -22,11 +23,14 @@ from langchain.prompts import (
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 )
+
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import LLMChain
 from langchain.agents import ZeroShotAgent, AgentExecutor, create_react_agent
 from app.utils.prompt_zero import zero_agent_prompt, image_prompt
 import json
+# import httpx
+import requests
 
 # from langgraph.prebuilt import create_react_agent
 
@@ -36,11 +40,32 @@ memory = ConversationBufferMemory(memory_key="chat_history",
                                   return_messages=True)
 
 
-def run_llm(question, image_b64):
-    print('run_llm')
-    llm_with_image_context = defaultllm.bind(images=image_b64)
-    res = llm_with_image_context.invoke(question)
-    return res
+async def run_llm(question, image_data):
+    """Use the tool asynchronously."""
+    payload = {
+        "model": "llava",
+        "stream": True,
+        "prompt": question,
+        "images": [image_data]
+    }
+    url = f"{p.OLLAMA_BASE_URL}/api/generate"
+    headers = {"Content-Type": "application/json"}
+    try:
+        with requests.post(url, json=payload, headers=headers,
+                           stream=True) as response:
+            if response.status_code == 200:
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            yield json.loads(line)
+                        except json.JSONDecodeError:
+                            print(f"Error decoding JSON: {line}")
+            else:
+                print(f"Error: {response.status_code}")
+                yield {"response": "Error in generating response"}
+    except requests.RequestException as e:
+        print(f"Request error: {e}")
+        yield {"response": "Error in generating response"}
 
 
 @router.websocket("")
@@ -146,11 +171,29 @@ async def websocket_endpoint(websocket: WebSocket):
             # agent_executor = AgentExecutor(agent=agent, tools=tools)
             # await agent_executor.arun(input=user_img,
             #                           callbacks=[custom_handler])
-            queestion = "describe exactly what food this is, including its taste in one short sentence"
-            res = run_llm(queestion, user_img)
-            response = {"result": res}
+            question = "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.How many calories are estimated to be in this meal?"
+            # res = run_llm(queestion, user_img)
 
-            await websocket.send(json.dumps(response))
+            # # if res.get() == "":
+            # #     response = {'type': "end"}
+            # # else:
+            # #     response = {"sender": "bot", "result": res}
+
+            # # await websocket.send(json.dumps(response))
+            # await websocket.send(res)
+            async for res in run_llm(question, user_img):
+
+                # try:
+                res['type'] = 'sub'
+                json_res = json.dumps(res)
+
+                print('json_res', json_res, "type", type(json_res))
+                # resp = json_res['response']
+                # print('resp', type(resp))
+                # ans = {"response": resp}
+                await websocket.send(json_res)
+                # except (TypeError, ValueError) as e:
+                #     print(f"Error sending message: {e}")
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
             break

@@ -29,14 +29,15 @@ async def retrieve_bot_response(text, image):
                         stream_data = response["error"]
                         break
 
-                    if response["sender"] == "bot":
-                        stream_data = (
-                            response["message"]["body"][0]["items"][0]["text"]
-                            if counter != 2 else "")
-                        st.markdown(stream_data)
+                    # if response["sender"] == "bot":
+                    # stream_data = (
+                    #     response["message"]["body"][0]["items"][0]["text"]
+                    #     if counter != 2 else "")
 
-                    if response["type"] == "end":
+                    if response["response"] == "":
                         break
+                    stream_data = response["response"]
+                    st.markdown(stream_data)
                 st.markdown(stream_data)
             except asyncio.TimeoutError:
                 st.warning("Connection timed out. Closing the connection.")
