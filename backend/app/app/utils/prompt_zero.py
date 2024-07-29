@@ -1,6 +1,7 @@
 # flake8: noqa
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 
 class IZeroPrompt(BaseModel):
@@ -41,7 +42,7 @@ zero_agent_prompt = IZeroPrompt(
 )
 
 
-def image_prompt(image_data: str):
+def prompt(image_data: str):
     message = HumanMessage(content=[
         {
             "type": "text",
@@ -55,3 +56,75 @@ def image_prompt(image_data: str):
         },
     ], )
     return message
+
+
+
+image_system_prompt = """
+You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.
+as reciving an image, you need to identify the items in the image is food or not. 
+if the image is food, you need to identify food name and food weight. 
+"""
+
+# image_prompt_template = ChatPromptTemplate.from_messages([
+#     (
+#         "system",
+#         system_prompt,
+#     ),
+#     (
+#         "human",
+#         [
+#             {
+#                 "type": "text",
+#                 "text": "{user_msg}"
+#             },
+#             {
+#                 "type": "image_url",
+#                 "image_url": {
+#                     "url": f"data:image/jpeg;base64,{image_data}"
+#                 },
+#             },
+#         ],
+#     ),
+# ])
+
+
+
+def text_prompt(user_msg: str):
+    # region: Identifying the items in the image
+    system_prompt = """
+    You are a highly knowledgeable and professional nutritionist.
+    you can estimate the food nutrient data by food weight and nutrient info.
+    """
+
+    prompt_template = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            system_prompt,
+        ),
+        (
+            "human",
+            [
+                {
+                    "type": "text",
+                    "text": "{user_msg}"
+                },
+            ],
+        ),
+    ])
+
+    return prompt_template
+
+
+# endregion
+
+# region: Answering question on what items are recyclable, and providing instructions
+# recycling_question = """
+# For each of the image_items, is the item recyclable in Singapore? If so, provide the recycling instructions. If the item is not recyclable. If the item is not recyclable, answer why the item(s) are not recyclable and how to properly dispose it.
+
+# """
+
+# template = """Answer the question referring to the following context.
+# Context: {context}
+
+# Question: {question}
+# """

@@ -1,3 +1,5 @@
+#chainlit
+
 import streamlit as st
 import asyncio
 import websockets
@@ -18,27 +20,24 @@ async def retrieve_bot_response(text, image):
         counter = 0
         with st.empty():
             stream_data = ""
+            stream_str = ""
+
             try:
+                # 收到第一個訊息後，回延遲；之後才回復
                 while True:
                     counter += 1
                     response = await asyncio.wait_for(websocket.recv(),
                                                       timeout=20)
                     response = json.loads(response)
+                    print(f'response:{response}')
 
                     if "error" in response:
                         stream_data = response["error"]
                         break
-
-                    # if response["sender"] == "bot":
-                    # stream_data = (
-                    #     response["message"]["body"][0]["items"][0]["text"]
-                    #     if counter != 2 else "")
-
                     if response["response"] == "":
                         break
-                    stream_data = response["response"]
-                    st.markdown(stream_data)
-                st.markdown(stream_data)
+                    stream_str += response["response"]
+                    stream_data = st.write(stream_str)
             except asyncio.TimeoutError:
                 st.warning("Connection timed out. Closing the connection.")
 

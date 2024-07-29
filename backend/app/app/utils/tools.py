@@ -8,6 +8,8 @@ import httpx
 # from app.utils import t5_pipe
 # from fastapi.concurrency import run_in_threadpool
 from app.utils.interface import chatllm
+from app.utils.prompt_zero import text_prompt, image_system_prompt
+from app.utils.agents import create_agent
 
 pokemon_api_url = "https://pokeapi.co/api/v2/pokemon/"
 # unsplash_api_url = f"https://api.unsplash.com/search/photos?client_id={settings.UNSPLASH_API_KEY}&query="
@@ -241,6 +243,31 @@ class NutrientSearchTool(BaseTool):
             return {'error': 'Unable to fetch nutrient information'}
 
 
+class FoodIdentifyTool(BaseTool):
+    name = "FoodIdentifyTool"
+    description = """"""
+
+    def __init__(self):
+        super().__init__()
+        # self.return_direct = True
+
+    def _run(self, image: str, run_manager: Optional[Any] = None) -> str:
+        """Use the tool."""
+        pass
+
+    async def _arun(self,
+                    image: str,
+                    run_manager: Optional[Any] = None) -> dict:
+        """Use the tool asynchronously."""
+        chat = chatllm
+        image_llm = chat.bind(images=[image])
+        # response = await chat.agenerate([[HumanMessage(content=query)]])
+        response = image_llm.invoke(image_system_prompt)
+        print('response', response)
+        message = response.generations[0][0].text
+        return message
+
+
 class NutrientCalTool(BaseTool):
     name = "NutrientCalculate"
     description = """Useful when asked to estimate nutrient information about food, 
@@ -264,7 +291,11 @@ class NutrientCalTool(BaseTool):
         """Use the tool asynchronously."""
         chat = chatllm
         query = f"based on nutrient info:{nutrient_dict} and food weight {weight} to estimate calories from food. provide the reference {nutrient_dict}"
-        response = await chat.agenerate([[HumanMessage(content=query)]])
+        prompt = text_prompt(query)
+        # response = await chat.agenerate([[HumanMessage(content=query)]])
+        agent = create_agent(chat, [], prompt)
+        response = agent.invoke(query)
+        print('response', response)
         message = response.generations[0][0].text
         return message
 

@@ -5,6 +5,8 @@ from app.core.config import settings
 from app.templates.chat import chat_html
 from contextlib import asynccontextmanager
 from starlette.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
 
 
 @asynccontextmanager
@@ -44,6 +46,35 @@ async def root():
     """
     # if oso.is_allowed(user, "read", message):
     return {"message": "Hello World"}
+
+
+async def send_message(content: str):
+    # callback = AsyncIteratorCallbackHandler()
+    # model = ChatOpenAI(
+    #     streaming=True,
+    #     verbose=True,
+    #     callbacks=[callback],
+    # )
+
+    # task = asyncio.create_task(
+    #     model.agenerate(messages=[[HumanMessage(content=content)]])
+    # )
+
+    try:
+        for token in content:
+            yield token
+    except Exception as e:
+        print(f"Caught exception: {e}")
+
+
+class Message(BaseModel):
+    content: str
+
+
+@app.post("/stream_chat/")
+async def stream_chat(message: Message):
+    generator = send_message(message.content)
+    return StreamingResponse(generator, media_type="text/event-stream")
 
 
 # @app.get("/chat", response_class=HTMLResponse)

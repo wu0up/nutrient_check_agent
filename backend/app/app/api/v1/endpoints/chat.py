@@ -13,7 +13,7 @@ from app.core.config import settings as p
 #                              PokemonSearchTool, YoutubeSearchTool,
 #                              GeneralWeatherTool, NutrientCalTool,
 #                              NutrientSearchTool)
-from app.utils.tools import NutrientSearchTool
+from app.utils.tools import NutrientSearchTool, NutrientCalTool, FoodIdentifyTool
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.utils.uuid6 import uuid7
 from langchain.chat_models import ChatOpenAI
@@ -31,6 +31,7 @@ from app.utils.prompt_zero import zero_agent_prompt, image_prompt
 import json
 # import httpx
 import requests
+from app.utils.agents import create_agent
 
 # from langgraph.prebuilt import create_react_agent
 
@@ -40,6 +41,7 @@ memory = ConversationBufferMemory(memory_key="chat_history",
                                   return_messages=True)
 
 
+# use tool, use memory
 async def run_llm(question, image_data):
     """Use the tool asynchronously."""
     payload = {
@@ -116,10 +118,6 @@ async def websocket_endpoint(websocket: WebSocket):
 @router.websocket("/tools")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-
-    # if not settings.OPENAI_API_KEY.startswith("sk-"):
-    #     await websocket.send_json({"error": "OPENAI_API_KEY is not set"})
-    #     return
     """
     直接串Ollama的post api
     """
@@ -146,16 +144,17 @@ async def websocket_endpoint(websocket: WebSocket):
             # custom_handler = CustomFinalStreamingStdOutCallbackHandler(
             #     websocket, message_id=message_id)
 
-            # tools = [
-            #     # GeneralKnowledgeTool(),
-            #     # PokemonSearchTool(),
-            #     # ImageSearchTool(),
-            #     # YoutubeSearchTool(),
-            #     # GeneralWeatherTool(),
-            #     NutrientSearchTool(),
-            #     # NutrientCalTool()
-            # ]
-
+            tools = [
+                # GeneralKnowledgeTool(),
+                # PokemonSearchTool(),
+                # ImageSearchTool(),
+                # YoutubeSearchTool(),
+                # GeneralWeatherTool(),
+                FoodIdentifyTool(),
+                NutrientSearchTool(),
+                NutrientCalTool()
+            ]
+            prompt = image_prompt(user_message)
             # # llm = ChatOpenAI(
             # #     streaming=True,
             # #     temperature=0,
@@ -171,29 +170,28 @@ async def websocket_endpoint(websocket: WebSocket):
             # agent_executor = AgentExecutor(agent=agent, tools=tools)
             # await agent_executor.arun(input=user_img,
             #                           callbacks=[custom_handler])
-            question = "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.How many calories are estimated to be in this meal?"
-            # res = run_llm(queestion, user_img)
+            agent = create_agent(defaultllm, tools, prompt)
+            """
+            吃文字、吃圖片、有記憶功能
+            """
+            async for chunk in agent.astream(
+                {"input": user_message},
+                # config={"configurable": {"session_id": session_id}},
+            ):
+                # Assuming the chunk is a dictionary and the answer is under the key 'answer'
+                if "answer" in chunk:
+                    answer = chunk["answer"]
+                    print(answer, end="", flush=True)  # Optional: for debugging
+                    # yield f"data:{answer}\n\n"
+                    await websocket.send_text(json.dumps(answer))
 
-            # # if res.get() == "":
-            # #     response = {'type': "end"}
-            # # else:
-            # #     response = {"sender": "bot", "result": res}
 
-            # # await websocket.send(json.dumps(response))
-            # await websocket.send(res)
-            async for res in run_llm(question, user_img):
+            # question = "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.How many calories are estimated to be in this meal?"
 
-                # try:
-                res['type'] = 'sub'
-                json_res = json.dumps(res)
+            # async for res in run_llm(question, user_img):
 
-                print('json_res', json_res, "type", type(json_res))
-                # resp = json_res['response']
-                # print('resp', type(resp))
-                # ans = {"response": resp}
-                await websocket.send(json_res)
-                # except (TypeError, ValueError) as e:
-                #     print(f"Error sending message: {e}")
+            #     await websocket.send_text(json.dumps(res))
+
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
             break
