@@ -3,13 +3,15 @@ from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
 from langchain.tools import BaseTool
 from serpapi import GoogleSearch
-from typing import Any, Optional
+from typing import Any, Optional, Annotated
+from langchain_core.tools import tool
 import httpx
 # from app.utils import t5_pipe
 # from fastapi.concurrency import run_in_threadpool
 from app.utils.interface import chatllm
 from app.utils.prompt_zero import text_prompt, image_system_prompt
-from app.utils.agents import create_agent
+
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 pokemon_api_url = "https://pokeapi.co/api/v2/pokemon/"
 # unsplash_api_url = f"https://api.unsplash.com/search/photos?client_id={settings.UNSPLASH_API_KEY}&query="
@@ -186,8 +188,8 @@ class GeneralWeatherTool(BaseTool):
 
 
 class NutrientSearchTool(BaseTool):
-    name = "NutrientSearch"
-    description = "Useful when asked to answer nutrient data about food"
+    name: str = "NutrientSearch"
+    description: str = "Useful when asked to answer nutrient data about food"
 
     def __init__(self):
         super().__init__()
@@ -243,8 +245,55 @@ class NutrientSearchTool(BaseTool):
             return {'error': 'Unable to fetch nutrient information'}
 
 
+# class NutrientSearchTool(BaseTool):
+
+#     @tool("NutrientSearch")
+#     async def nutrient_search(food_name: str):
+#         """ Useful when asked to answer nutrient data about food"""
+#         api_key = 'AJkI7imE8qiJN6F2a6F3kpdIlzogNsmCXDflzLTx'
+#         base_url = p.FOOD_DATABASE_URL
+#         nutrient_lst = [
+#             'Protein', "Total lipid (fat)", "Carbohydrate, by difference",
+#             "Energy", "Total Sugars"
+#         ]
+#         # Make a request to the API to search for the food
+#         params = {
+#             'api_key': api_key,
+#             'query': food_name,
+#         }
+#         async with httpx.AsyncClient() as client:
+#             response = await client.get(base_url, params=params)
+
+#         if response.status_code == 200:
+#             # Parse the response to get the first food item
+#             food_item = response.json()['foods'][0]
+
+#             # Extract relevant nutrient information
+#             nutrient_info = {'Food': food_item['description']}
+#             nutrient_info['servingSize'] = 100
+#             nutrient_info['servingSizeUnit'] = 'g'
+#             if 'servingSize' in food_item:
+#                 nutrient_info['servingSize'] = food_item['servingSize']
+
+#             if 'servingSizeUnit' in food_item:
+#                 nutrient_info['servingSizeUnit'] = food_item['servingSizeUnit']
+#             # Check if 'foodNutrients' key is present
+#             if 'foodNutrients' in food_item:
+#                 # Extract nutrient information based on the available keys
+#                 for nutrient in food_item['foodNutrients']:
+#                     nutrient_name = nutrient.get('nutrientName', '')
+#                     if nutrient_name in nutrient_lst:
+#                         nutrient_amount = nutrient.get('amount', '')
+#                         nutrient_info[nutrient_name] = nutrient_amount
+
+#             return nutrient_info
+#         else:
+#             # Handle API request failure
+#             return {'error': 'Unable to fetch nutrient information'}
+
+
 class FoodIdentifyTool(BaseTool):
-    name = "FoodIdentifyTool"
+    name: str = "FoodIdentifyTool"
     description = """"""
 
     def __init__(self):
@@ -269,8 +318,8 @@ class FoodIdentifyTool(BaseTool):
 
 
 class NutrientCalTool(BaseTool):
-    name = "NutrientCalculate"
-    description = """Useful when asked to estimate nutrient information about food, 
+    name: str = "NutrientCalculate"
+    description = """Useful when asked to estimate nutrient information about food,
                     by use weight and nutrient data to calculate the nutrient information about food"""
 
     def __init__(self):
@@ -299,6 +348,41 @@ class NutrientCalTool(BaseTool):
         message = response.generations[0][0].text
         return message
 
+
+# class NutrientCalTool(BaseTool):
+
+#     @tool("NutrientCalculate")
+#     async def nutrient_calculate(weight: float, nutrient_dict: dict):
+#         """Useful when asked to estimate nutrient information about food, by use weight and nutrient data to calculate the nutrient information about food"""
+#         chat = chatllm
+#         query = f"based on nutrient info:{nutrient_dict} and food weight {weight} to estimate calories from food. provide the reference {nutrient_dict}"
+#         prompt = text_prompt(query)
+#         # response = await chat.agenerate([[HumanMessage(content=query)]])
+#         agent = create_agent(chat, [], prompt)
+#         response = agent.invoke(query)
+#         print('response', response)
+#         message = response.generations[0][0].text
+#         return message
+
+# def create_agent(llm, tools, system_message: str):
+#     """Create an agent."""
+#     prompt = ChatPromptTemplate.from_messages([
+#         (
+#             "system",
+#             "You are a helpful AI assistant, collaborating with other assistants."
+#             " Use the provided tools to progress towards answering the question."
+#             " If you are unable to fully answer, that's OK, another assistant with different tools "
+#             " will help where you left off. Execute what you can to make progress."
+#             " If you or any of the other assistants have the final answer or deliverable,"
+#             " prefix your response with FINAL ANSWER so the team knows to stop."
+#             " You have access to the following tools: {tool_names}.\n{system_message}",
+#         ),
+#         MessagesPlaceholder(variable_name="messages"),
+#     ])
+#     prompt = prompt.partial(system_message=system_message)
+#     prompt = prompt.partial(tool_names=", ".join([tool.name
+#                                                   for tool in tools]))
+#     return prompt | llm.bind_tools(tools)
 
 # 目前無法使用
 # class TranslationTool(BaseTool):

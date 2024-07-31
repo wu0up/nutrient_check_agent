@@ -9,6 +9,9 @@ from streamlit_float import float_init
 
 float_init()
 
+"""
+無法同時input text and image
+"""
 
 async def retrieve_bot_response(text, image):
     async with websockets.connect(

@@ -42,11 +42,11 @@ zero_agent_prompt = IZeroPrompt(
 )
 
 
-def prompt(image_data: str):
+def image_prompt(image_data: str):
     message = HumanMessage(content=[
         {
             "type": "text",
-            "text": "describe the weather in this image"
+            "text": "estimate the nutrient of this image"
         },
         {
             "type": "image_url",
@@ -56,7 +56,6 @@ def prompt(image_data: str):
         },
     ], )
     return message
-
 
 
 image_system_prompt = """
@@ -86,7 +85,6 @@ if the image is food, you need to identify food name and food weight.
 #         ],
 #     ),
 # ])
-
 
 
 def text_prompt(user_msg: str):

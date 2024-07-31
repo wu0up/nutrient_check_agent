@@ -32,6 +32,12 @@ import json
 # import httpx
 import requests
 from app.utils.agents import create_agent
+from app.utils.graph import FoodGraph
+from langchain_core.messages import (
+    BaseMessage,
+    HumanMessage,
+    ToolMessage,
+)
 
 # from langgraph.prebuilt import create_react_agent
 
@@ -126,6 +132,7 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             data = await websocket.receive_json()
             user_message = data["message"]
+
             user_img = data["image"]
             user_message = image_prompt(user_img)
             # user_message_card = create_adaptive_card(user_message)
@@ -154,7 +161,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 NutrientSearchTool(),
                 NutrientCalTool()
             ]
-            prompt = image_prompt(user_message)
+            # prompt = image_prompt(user_message)
             # # llm = ChatOpenAI(
             # #     streaming=True,
             # #     temperature=0,
@@ -174,17 +181,26 @@ async def websocket_endpoint(websocket: WebSocket):
             """
             吃文字、吃圖片、有記憶功能
             """
-            async for chunk in agent.astream(
-                {"input": user_message},
-                # config={"configurable": {"session_id": session_id}},
-            ):
-                # Assuming the chunk is a dictionary and the answer is under the key 'answer'
-                if "answer" in chunk:
-                    answer = chunk["answer"]
-                    print(answer, end="", flush=True)  # Optional: for debugging
-                    # yield f"data:{answer}\n\n"
-                    await websocket.send_text(json.dumps(answer))
+            # async for chunk in agent.astream(
+            #     {"input": user_message},
+            #         # config={"configurable": {"session_id": session_id}},
+            # ):
+            # Assuming the chunk is a dictionary and the answer is under the key 'answer'
 
+
+            prompt = {"messages": user_message, "image_url": user_img}
+            print(prompt)
+            graph_result = FoodGraph.invoke(prompt)
+            result = graph_result["messages"]
+            # print(list(s.values())[0])
+            # print("----")
+            # if "answer" in chunk:
+            # answer = chunk["answer"]
+            # print(answer, end="",
+            #       flush=True)  # Optional: for debugging
+            # # yield f"data:{answer}\n\n"
+            # answer = list(s.values())[0]
+            await websocket.send_text(json.dumps(result))
 
             # question = "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.How many calories are estimated to be in this meal?"
 
