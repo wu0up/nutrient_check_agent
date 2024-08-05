@@ -10,8 +10,13 @@ import httpx
 # from fastapi.concurrency import run_in_threadpool
 from app.utils.interface import chatllm
 from app.utils.prompt_zero import text_prompt, image_system_prompt
-
+import re, base64, requests, json
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+from langchain_core.callbacks import (
+    AsyncCallbackManagerForToolRun,
+    CallbackManagerForToolRun,
+)
 
 pokemon_api_url = "https://pokeapi.co/api/v2/pokemon/"
 # unsplash_api_url = f"https://api.unsplash.com/search/photos?client_id={settings.UNSPLASH_API_KEY}&query="
@@ -191,17 +196,19 @@ class NutrientSearchTool(BaseTool):
     name: str = "NutrientSearch"
     description: str = "Useful when asked to answer nutrient data about food"
 
-    def __init__(self):
-        super().__init__()
-        # self.return_direct = True
+    # def __init__(self):
+    #     super().__init__()
+    # self.return_direct = True
 
-    def _run(self, food: str, run_manager: Optional[Any] = None) -> str:
+    def _run(self, food_name: str, run_manager: Optional[Any] = None) -> str:
         """Use the tool."""
         pass
 
-    async def _arun(self,
-                    food_name: str,
-                    run_manager: Optional[Any] = None) -> dict:
+    async def _arun(
+        self,
+        food_name: str,
+        run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
+    ) -> dict:
         """Use the tool asynchronously."""
         api_key = 'AJkI7imE8qiJN6F2a6F3kpdIlzogNsmCXDflzLTx'
         base_url = p.FOOD_DATABASE_URL
@@ -245,51 +252,105 @@ class NutrientSearchTool(BaseTool):
             return {'error': 'Unable to fetch nutrient information'}
 
 
-# class NutrientSearchTool(BaseTool):
+# @tool
+# async def NutrientSearch(food_name: str):
+#     """ Useful when asked to answer nutrient data about food"""
+#     api_key = 'AJkI7imE8qiJN6F2a6F3kpdIlzogNsmCXDflzLTx'
+#     base_url = p.FOOD_DATABASE_URL
+#     nutrient_lst = [
+#         'Protein', "Total lipid (fat)", "Carbohydrate, by difference",
+#         "Energy", "Total Sugars"
+#     ]
+#     # Make a request to the API to search for the food
+#     params = {
+#         'api_key': api_key,
+#         'query': food_name,
+#     }
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(base_url, params=params)
 
-#     @tool("NutrientSearch")
-#     async def nutrient_search(food_name: str):
-#         """ Useful when asked to answer nutrient data about food"""
-#         api_key = 'AJkI7imE8qiJN6F2a6F3kpdIlzogNsmCXDflzLTx'
-#         base_url = p.FOOD_DATABASE_URL
-#         nutrient_lst = [
-#             'Protein', "Total lipid (fat)", "Carbohydrate, by difference",
-#             "Energy", "Total Sugars"
-#         ]
-#         # Make a request to the API to search for the food
-#         params = {
-#             'api_key': api_key,
-#             'query': food_name,
-#         }
-#         async with httpx.AsyncClient() as client:
-#             response = await client.get(base_url, params=params)
+#     if response.status_code == 200:
+#         # Parse the response to get the first food item
+#         food_item = response.json()['foods'][0]
 
-#         if response.status_code == 200:
-#             # Parse the response to get the first food item
-#             food_item = response.json()['foods'][0]
+#         # Extract relevant nutrient information
+#         nutrient_info = {'Food': food_item['description']}
+#         nutrient_info['servingSize'] = 100
+#         nutrient_info['servingSizeUnit'] = 'g'
+#         if 'servingSize' in food_item:
+#             nutrient_info['servingSize'] = food_item['servingSize']
 
-#             # Extract relevant nutrient information
-#             nutrient_info = {'Food': food_item['description']}
-#             nutrient_info['servingSize'] = 100
-#             nutrient_info['servingSizeUnit'] = 'g'
-#             if 'servingSize' in food_item:
-#                 nutrient_info['servingSize'] = food_item['servingSize']
+#         if 'servingSizeUnit' in food_item:
+#             nutrient_info['servingSizeUnit'] = food_item['servingSizeUnit']
+#         # Check if 'foodNutrients' key is present
+#         if 'foodNutrients' in food_item:
+#             # Extract nutrient information based on the available keys
+#             for nutrient in food_item['foodNutrients']:
+#                 nutrient_name = nutrient.get('nutrientName', '')
 
-#             if 'servingSizeUnit' in food_item:
-#                 nutrient_info['servingSizeUnit'] = food_item['servingSizeUnit']
-#             # Check if 'foodNutrients' key is present
-#             if 'foodNutrients' in food_item:
-#                 # Extract nutrient information based on the available keys
-#                 for nutrient in food_item['foodNutrients']:
-#                     nutrient_name = nutrient.get('nutrientName', '')
-#                     if nutrient_name in nutrient_lst:
-#                         nutrient_amount = nutrient.get('amount', '')
-#                         nutrient_info[nutrient_name] = nutrient_amount
+#                 if nutrient_name in nutrient_lst:
 
-#             return nutrient_info
-#         else:
-#             # Handle API request failure
-#             return {'error': 'Unable to fetch nutrient information'}
+#                     nutrient_amount = nutrient.get('value', '')
+#                     nutrient_info[nutrient_name] = nutrient_amount
+
+#         return nutrient_info
+#     else:
+#         # Handle API request failure
+#         return {'error': 'Unable to fetch nutrient information'}
+
+
+def NutrientSearch(food_name: str):
+    """ Useful when asked to answer nutrient data about food"""
+    api_key = 'AJkI7imE8qiJN6F2a6F3kpdIlzogNsmCXDflzLTx'
+    base_url = p.FOOD_DATABASE_URL
+    nutrient_lst = [
+        'Protein', "Total lipid (fat)", "Carbohydrate, by difference",
+        "Energy", "Total Sugars"
+    ]
+    # Make a request to the API to search for the food
+    params = {
+        'api_key': api_key,
+        'query': food_name,
+    }
+    response = requests.request(
+        "get",
+        base_url,
+        params=params,
+        timeout=600,
+        #  headers=headers,
+        #  verify=verify
+    )
+
+    # response = json.loads(r.text)
+
+    if response.status_code == 200:
+        # Parse the response to get the first food item
+        food_item = response.json()['foods'][0]
+
+        # Extract relevant nutrient information
+        nutrient_info = {'Food': food_item['description']}
+        nutrient_info['servingSize'] = 100
+        nutrient_info['servingSizeUnit'] = 'g'
+        if 'servingSize' in food_item:
+            nutrient_info['servingSize'] = food_item['servingSize']
+
+        if 'servingSizeUnit' in food_item:
+            nutrient_info['servingSizeUnit'] = food_item['servingSizeUnit']
+        # Check if 'foodNutrients' key is present
+        if 'foodNutrients' in food_item:
+            # Extract nutrient information based on the available keys
+            for nutrient in food_item['foodNutrients']:
+                nutrient_name = nutrient.get('nutrientName', '')
+
+                if nutrient_name in nutrient_lst:
+
+                    nutrient_amount = nutrient.get('value', '')
+                    nutrient_info[nutrient_name] = nutrient_amount
+
+        return nutrient_info
+    else:
+        # Handle API request failure
+        return {'error': 'Unable to fetch nutrient information'}
 
 
 class FoodIdentifyTool(BaseTool):
@@ -317,43 +378,27 @@ class FoodIdentifyTool(BaseTool):
         return message
 
 
-class NutrientCalTool(BaseTool):
-    name: str = "NutrientCalculate"
-    description = """Useful when asked to estimate nutrient information about food,
-                    by use weight and nutrient data to calculate the nutrient information about food"""
-
-    def __init__(self):
-        super().__init__()
-        # self.return_direct = True
-
-    def _run(self,
-             weight: float,
-             nutrient_dict: dict,
-             run_manager: Optional[Any] = None) -> str:
-        """Use the tool."""
-        pass
-
-    async def _arun(self,
-                    weight: float,
-                    nutrient_dict: dict,
-                    run_manager: Optional[Any] = None) -> dict:
-        """Use the tool asynchronously."""
-        chat = chatllm
-        query = f"based on nutrient info:{nutrient_dict} and food weight {weight} to estimate calories from food. provide the reference {nutrient_dict}"
-        prompt = text_prompt(query)
-        # response = await chat.agenerate([[HumanMessage(content=query)]])
-        agent = create_agent(chat, [], prompt)
-        response = agent.invoke(query)
-        print('response', response)
-        message = response.generations[0][0].text
-        return message
-
-
 # class NutrientCalTool(BaseTool):
+#     name: str = "NutrientCalculate"
+#     description = """Useful when asked to estimate nutrient information about food,
+#                     by use weight and nutrient data to calculate the nutrient information about food"""
 
-#     @tool("NutrientCalculate")
-#     async def nutrient_calculate(weight: float, nutrient_dict: dict):
-#         """Useful when asked to estimate nutrient information about food, by use weight and nutrient data to calculate the nutrient information about food"""
+#     def __init__(self):
+#         super().__init__()
+#         # self.return_direct = True
+
+#     def _run(self,
+#              weight: float,
+#              nutrient_dict: dict,
+#              run_manager: Optional[Any] = None) -> str:
+#         """Use the tool."""
+#         pass
+
+#     async def _arun(self,
+#                     weight: float,
+#                     nutrient_dict: dict,
+#                     run_manager: Optional[Any] = None) -> dict:
+#         """Use the tool asynchronously."""
 #         chat = chatllm
 #         query = f"based on nutrient info:{nutrient_dict} and food weight {weight} to estimate calories from food. provide the reference {nutrient_dict}"
 #         prompt = text_prompt(query)
@@ -364,25 +409,49 @@ class NutrientCalTool(BaseTool):
 #         message = response.generations[0][0].text
 #         return message
 
-# def create_agent(llm, tools, system_message: str):
-#     """Create an agent."""
-#     prompt = ChatPromptTemplate.from_messages([
-#         (
-#             "system",
-#             "You are a helpful AI assistant, collaborating with other assistants."
-#             " Use the provided tools to progress towards answering the question."
-#             " If you are unable to fully answer, that's OK, another assistant with different tools "
-#             " will help where you left off. Execute what you can to make progress."
-#             " If you or any of the other assistants have the final answer or deliverable,"
-#             " prefix your response with FINAL ANSWER so the team knows to stop."
-#             " You have access to the following tools: {tool_names}.\n{system_message}",
-#         ),
-#         MessagesPlaceholder(variable_name="messages"),
-#     ])
-#     prompt = prompt.partial(system_message=system_message)
-#     prompt = prompt.partial(tool_names=", ".join([tool.name
-#                                                   for tool in tools]))
-#     return prompt | llm.bind_tools(tools)
+# @tool
+# async def NutrientCalculate(weight: float, nutrient_dict: dict):
+#     """Useful when asked to estimate nutrient information about food, by use weight and nutrient data to calculate the nutrient information about food"""
+#     chat = chatllm
+#     query = f"based on nutrient info:{nutrient_dict} and food weight {weight} to estimate calories from food. provide the reference {nutrient_dict}"
+#     prompt = text_prompt(query)
+#     # response = await chat.agenerate([[HumanMessage(content=query)]])
+#     agent = create_agent(chat, [], prompt)
+#     response = agent.invoke(query)
+#     print('response', response)
+#     message = response.generations[0][0].text
+#     return message
+
+
+def NutrientCalculate(weight: float, nutrient_dict: dict):
+    """Useful when asked to estimate nutrient information about food, by use weight and nutrient data to calculate the nutrient information about food"""
+    chat = chatllm
+    nutrient_dict_str = json.dumps(nutrient_dict)
+    query = f"you are good at math; you know the weight of food is {weight}, and each nutrient per serving in nutrient info: {nutrient_dict_str}, you also know serving size is servingSize in nutrient_dict_str, you can calculate the food nutrient based on weight {weight} and nutrient info {nutrient_dict_str}. do step by step and provide each step"
+    # prompt = text_prompt(query)
+    # response = await chat.agenerate([[HumanMessage(content=query)]])
+    agent = create_agent(chat)
+    # response = agent.invoke({"messages": HumanMessage([query])})
+    response = chat.invoke(query)
+    print('response', response)
+
+    return response
+
+
+def create_agent(llm):
+    """Create an agent."""
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "You are good at math",
+        ),
+        MessagesPlaceholder(variable_name="messages"),
+    ])
+    # prompt = prompt.partial(system_message=system_message)
+    # prompt = prompt.partial(tool_names=", ".join([tool.name
+    #                                               for tool in tools]))
+    return prompt | llm
+
 
 # 目前無法使用
 # class TranslationTool(BaseTool):

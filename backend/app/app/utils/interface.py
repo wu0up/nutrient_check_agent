@@ -33,4 +33,5 @@ __all__ = ["chatllm", "embeddings"]
 chatllm = OllamaFunctions(model=p.OLLAMA_BASE_MODEL,
                           base_url=p.OLLAMA_BASE_URL,
                           request_timeout=1800,
+                          temperature=0,
                           format="json")
