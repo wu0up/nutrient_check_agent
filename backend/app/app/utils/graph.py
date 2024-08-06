@@ -116,6 +116,8 @@ def create_agent_no_tool(llm, system_message: str):
     return prompt | llm.bind_tools([FoodInfo])
 
 
+
+
 # Helper function to create a node for a given agent
 def agent_search_node(state: StateGraph, agent):
     print('state', state)
@@ -237,7 +239,8 @@ nutrient_identify_agent = create_agent_no_tool(
     system_message=
     #     """as reciving an image, you need to identify the items in the image is food or not.
     # if the image is food, you need to identify food name and food weight. """,
-    """You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.as reciving an image, you need to identify the items in the image is food or not. if the image is food, you need to identify food name and food weight(grams). """,
+    """You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.
+    as reciving an image, you need to identify the items in the image is food or not. if the image is food, you need to identify food name and food weight(grams). """,
 )
 
 

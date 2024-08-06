@@ -9,11 +9,7 @@ from app.utils.callback import (
     CustomFinalStreamingStdOutCallbackHandler,
 )
 from app.core.config import settings as p
-# from app.utils.tools import (GeneralKnowledgeTool, ImageSearchTool,
-#                              PokemonSearchTool, YoutubeSearchTool,
-#                              GeneralWeatherTool, NutrientCalTool,
-#                              NutrientSearchTool)
-from app.utils.tools import NutrientSearchTool, NutrientCalTool, FoodIdentifyTool
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.utils.uuid6 import uuid7
 from langchain.chat_models import ChatOpenAI
@@ -26,18 +22,13 @@ from langchain.prompts import (
 
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import LLMChain
-from langchain.agents import ZeroShotAgent, AgentExecutor, create_react_agent
 from app.utils.prompt_zero import zero_agent_prompt, image_prompt
 import json
 # import httpx
 import requests
-from app.utils.agents import create_agent
-from app.utils.graph import FoodGraph
-from langchain_core.messages import (
-    BaseMessage,
-    HumanMessage,
-    ToolMessage,
-)
+import base64
+from app.utils.graph import get_all_node
+from app.utils.prompt_zero import image_prompt
 
 # from langgraph.prebuilt import create_react_agent
 
@@ -135,78 +126,13 @@ async def websocket_endpoint(websocket: WebSocket):
 
             user_img = data["image"]
             user_message = image_prompt(user_img)
-            # user_message_card = create_adaptive_card(user_message)
-
-            # resp = IChatResponse(
-            #     sender="you",
-            #     # message=user_message_card.to_dict(),
-            #     message=user_message,
-            #     type="start",
-            #     message_id=str(uuid7()),
-            #     id=str(uuid7()),
-            # )
-
-            # await websocket.send_json(resp.dict())
-            # message_id: str = str(uuid7())
-            # custom_handler = CustomFinalStreamingStdOutCallbackHandler(
-            #     websocket, message_id=message_id)
-
-            tools = [
-                # GeneralKnowledgeTool(),
-                # PokemonSearchTool(),
-                # ImageSearchTool(),
-                # YoutubeSearchTool(),
-                # GeneralWeatherTool(),
-                FoodIdentifyTool(),
-                NutrientSearchTool(),
-                NutrientCalTool()
-            ]
-            # prompt = image_prompt(user_message)
-            # # llm = ChatOpenAI(
-            # #     streaming=True,
-            # #     temperature=0,
-            # # )
-
-            # #TODO: handle memory
-            # agent = create_react_agent(
-            #     llm=defaultllm,
-            #     tools=tools,
-            #     prompt=image_prompt,
-            #     # checkpointer=memory
-            # )
-            # agent_executor = AgentExecutor(agent=agent, tools=tools)
-            # await agent_executor.arun(input=user_img,
-            #                           callbacks=[custom_handler])
-            agent = create_agent(defaultllm, tools, prompt)
-            """
-            吃文字、吃圖片、有記憶功能
-            """
-            # async for chunk in agent.astream(
-            #     {"input": user_message},
-            #         # config={"configurable": {"session_id": session_id}},
-            # ):
-            # Assuming the chunk is a dictionary and the answer is under the key 'answer'
-
-
             prompt = {"messages": user_message, "image_url": user_img}
-            print(prompt)
-            graph_result = FoodGraph.invoke(prompt)
-            result = graph_result["messages"]
-            # print(list(s.values())[0])
-            # print("----")
-            # if "answer" in chunk:
-            # answer = chunk["answer"]
-            # print(answer, end="",
-            #       flush=True)  # Optional: for debugging
-            # # yield f"data:{answer}\n\n"
-            # answer = list(s.values())[0]
+
+            graph_result = get_all_node(prompt)
+            print('graph_result', graph_result)
+            result = graph_result.content
+
             await websocket.send_text(json.dumps(result))
-
-            # question = "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.How many calories are estimated to be in this meal?"
-
-            # async for res in run_llm(question, user_img):
-
-            #     await websocket.send_text(json.dumps(res))
 
         except WebSocketDisconnect:
             logging.info("websocket disconnect")

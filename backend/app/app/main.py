@@ -1,12 +1,11 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Request, APIRouter, status, UploadFile, Query, File
 from app.api.v1.api import api_router as api_router_v1
 from app.core.config import settings
 from app.templates.chat import chat_html
 from contextlib import asynccontextmanager
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 
 
 @asynccontextmanager
@@ -72,7 +71,7 @@ class Message(BaseModel):
 
 
 @app.post("/stream_chat/")
-async def stream_chat(message: Message):
+async def stream_chat(message: Message, file: UploadFile = File(...)):
     generator = send_message(message.content)
     return StreamingResponse(generator, media_type="text/event-stream")
 

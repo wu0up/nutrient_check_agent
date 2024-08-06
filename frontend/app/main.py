@@ -15,14 +15,15 @@ float_init()
 
 async def retrieve_bot_response(text, image):
     async with websockets.connect(
-            "ws://192.168.8.114:8000/api/v1/chat/tools") as websocket:
+            "ws://192.168.208.1:8000/api/v1/chat/tools") as websocket:
         message_data = {"message": text, "image": image}
         json_data = json.dumps(message_data)
-
+        stream_data = ""
+        print("stream_data start",stream_data)
         await websocket.send(json_data)
         counter = 0
         with st.empty():
-            stream_data = ""
+            
             stream_str = ""
 
             try:
@@ -34,16 +35,17 @@ async def retrieve_bot_response(text, image):
                     response = json.loads(response)
                     print(f'response:{response}')
 
-                    if "error" in response:
-                        stream_data = response["error"]
-                        break
-                    if response["response"] == "":
-                        break
-                    stream_str += response["response"]
-                    stream_data = st.write(stream_str)
+                    # if "error" in response:
+                    #     stream_data = response["error"]
+                    #     break
+                    # if response["response"] == "":
+                    #     break
+                    # stream_str += response["response"]
+                    stream_data = st.write(response)
+                    stream_data = response
             except asyncio.TimeoutError:
                 st.warning("Connection timed out. Closing the connection.")
-
+        print("stream_data",stream_data)
         return stream_data
 
 

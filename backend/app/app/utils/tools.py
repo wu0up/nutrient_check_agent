@@ -12,7 +12,7 @@ from app.utils.interface import chatllm
 from app.utils.prompt_zero import text_prompt, image_system_prompt
 import re, base64, requests, json
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-
+from app.schemas.response_schema import NutrientInfo
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -425,14 +425,38 @@ class FoodIdentifyTool(BaseTool):
 
 def NutrientCalculate(weight: float, nutrient_dict: dict):
     """Useful when asked to estimate nutrient information about food, by use weight and nutrient data to calculate the nutrient information about food"""
-    chat = chatllm
+
+    # def create_agent_no_tool(llm, system_message: str):
+    #     """Create an agent."""
+    #     # file_path = r"C:\Users\PJ-Lin\Documents\LLM\multi_tool\food_eva.jpg"
+    #     # with open(file_path, 'rb') as file:
+    #     #     image_data = base64.b64encode(file.read()).decode("utf-8")
+    #     prompt = ChatPromptTemplate.from_messages([
+    #         # (
+    #         #     "system",
+    #         #     # "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.as reciving an image, you need to identify the items in the image is food or not. if the image is food, you need to identify food name and food weight.",
+    #         system_message,
+    #         # ),
+    #         # MessagesPlaceholder(variable_name="messages"),
+    #         (
+    #             "human",
+    #             [{
+    #                 "type": "text",
+    #                 "text": f"{system_message}"
+    #             }],
+    #         ),
+    #     ])
+    #     prompt = prompt.partial(system_message=system_message)
+
+    #     return prompt | llm.bind_tools([NutrientInfo])
+
     nutrient_dict_str = json.dumps(nutrient_dict)
-    query = f"you are good at math; you know the weight of food is {weight}, and each nutrient per serving in nutrient info: {nutrient_dict_str}, you also know serving size is servingSize in nutrient_dict_str, you can calculate the food nutrient based on weight {weight} and nutrient info {nutrient_dict_str}. do step by step and provide each step"
+    query = f"you know the weight of food is {weight}, and each nutrient per serving in nutrient info: {nutrient_dict_str}, you also know serving size is servingSize in nutrient_dict_str, your task is to calculate the food nutrient based on weight {weight} and nutrient info {nutrient_dict_str} and provide the food nutrient. think step by step and provide reference(nutirent_dict)."
     # prompt = text_prompt(query)
     # response = await chat.agenerate([[HumanMessage(content=query)]])
-    agent = create_agent(chat)
     # response = agent.invoke({"messages": HumanMessage([query])})
-    response = chat.invoke(query)
+    # agent = create_agent_no_tool(chatllm, query)
+    response = chatllm.invoke(query)
     print('response', response)
 
     return response

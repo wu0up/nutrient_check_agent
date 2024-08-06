@@ -12,11 +12,9 @@ T = TypeVar("T")
 
 class PageBase(Page[T], Generic[T]):
     previous_page: int | None = Field(
-        default=None, description="Page number of the previous page"
-    )
-    next_page: int | None = Field(
-        default=None, description="Page number of the next page"
-    )
+        default=None, description="Page number of the previous page")
+    next_page: int | None = Field(default=None,
+                                  description="Page number of the next page")
 
 
 class IResponseBase(BaseModel, Generic[T]):
@@ -44,17 +42,15 @@ class IGetResponsePaginated(AbstractPage[T], Generic[T]):
         else:
             pages = 0
 
-        return cls(
-            data=PageBase[T](
-                items=items,
-                page=params.page,
-                size=params.size,
-                total=total,
-                pages=pages,
-                next_page=params.page + 1 if params.page < pages else None,
-                previous_page=params.page - 1 if params.page > 1 else None,
-            )
-        )
+        return cls(data=PageBase[T](
+            items=items,
+            page=params.page,
+            size=params.size,
+            total=total,
+            pages=pages,
+            next_page=params.page + 1 if params.page < pages else None,
+            previous_page=params.page - 1 if params.page > 1 else None,
+        ))
 
 
 class IGetResponseBase(IResponseBase[DataType], Generic[DataType]):
@@ -77,14 +73,12 @@ def create_response(
     data: DataType,
     message: str | None = None,
     meta: dict | Any | None = {},
-) -> (
-    IResponseBase[DataType]
-    | IGetResponsePaginated[DataType]
-    | IGetResponseBase[DataType]
-    | IPutResponseBase[DataType]
-    | IDeleteResponseBase[DataType]
-    | IPostResponseBase[DataType]
-):
+) -> (IResponseBase[DataType]
+      | IGetResponsePaginated[DataType]
+      | IGetResponseBase[DataType]
+      | IPutResponseBase[DataType]
+      | IDeleteResponseBase[DataType]
+      | IPostResponseBase[DataType]):
     if isinstance(data, IGetResponsePaginated):
         data.message = "Data paginated correctly" if message is None else message
         data.meta = meta
@@ -92,3 +86,15 @@ def create_response(
     if message is None:
         return {"data": data, "meta": meta}
     return {"data": data, "message": message, "meta": meta}
+
+
+class NutrientInfo(BaseModel):
+    """Always use this tool to structure your response to the user."""
+    food_name: str = Field(description="name of image's food")
+    weight: float = Field(description="the weight estimate from food")
+    contain: str = Field(
+        description=
+        "nutrient info of food calculated based on nutrient_dict_str and weight"
+    )
+    suggest: str = Field(
+        description="suggestion of food based on contain, health or unhealth")
