@@ -29,7 +29,7 @@ import requests
 import base64
 from app.utils.graph import get_all_node
 from app.utils.prompt_zero import image_prompt
-
+from app.utils.agents import huanik
 # from langgraph.prebuilt import create_react_agent
 
 router = APIRouter()
@@ -115,9 +115,6 @@ async def websocket_endpoint(websocket: WebSocket):
 @router.websocket("/tools")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    """
-    直接串Ollama的post api
-    """
 
     while True:
         try:
@@ -131,7 +128,9 @@ async def websocket_endpoint(websocket: WebSocket):
             graph_result = get_all_node(prompt)
             print('graph_result', graph_result)
             if not isinstance(graph_result, str):
-                result = graph_result.content
+                # result = graph_result.content
+                result = huanik("English", "Traditional chinese",
+                                graph_result.content, "Taiwan", 5000)
             else:
                 result = graph_result
             await websocket.send_text(json.dumps(result))

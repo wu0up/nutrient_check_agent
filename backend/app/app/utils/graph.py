@@ -42,6 +42,8 @@ from langchain_core.output_parsers import JsonOutputParser
 
 import base64
 from langchain_core.tools import StructuredTool
+
+
 # tools = [NutrientSearchTool, NutrientCalTool, FoodIdentifyTool]
 tools = [NutrientCalculate, NutrientSearch]
 llm = chatllm
@@ -239,6 +241,40 @@ def tool_agent_cal(state, tool):
 #     agent=nutrient_cal_agent,
 # )
 
+
+def huanik(endpoint, model, api_key, source_lang, target_lang, source_text,
+           country, max_tokens):
+
+    ic(source_text)
+    if not source_text or source_lang == target_lang:
+        raise gr.Error("Please check the contents and options right.")
+
+    ta.model_load(endpoint, model, api_key)
+
+    source_text = re.sub(r'\n+', '\n', source_text)
+
+    init_translation, reflect_translation, final_translation = ta.translate(
+        source_lang=source_lang,
+        target_lang=target_lang,
+        source_text=source_text,
+        country=country,
+        max_tokens=max_tokens,
+    )
+
+    final_diff = gr.HighlightedText(diff_texts(init_translation,
+                                               final_translation),
+                                    label="Diff translation",
+                                    combine_adjacent=True,
+                                    show_legend=True,
+                                    visible=True,
+                                    color_map={
+                                        "removed": "red",
+                                        "added": "green"
+                                    })
+
+    return init_translation, reflect_translation, final_translation, final_diff
+
+
 nutrient_identify_agent = create_agent_no_tool(
     llm,
     system_message=
@@ -267,6 +303,7 @@ def get_all_node(prompt):
     food_info['nutrient_dict'] = nutriend_dict
 
     res = tool_agent_cal(food_info, NutrientCalculate)
+
     return res
 
 

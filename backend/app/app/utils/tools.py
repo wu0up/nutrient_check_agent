@@ -313,7 +313,7 @@ def NutrientSearch(food_name: str):
     params = {
         'api_key': api_key,
         'query': food_name,
-        "pageSize": 10,
+        "pageSize": 3,
         "pageNumber": 1
     }
     response = requests.request(

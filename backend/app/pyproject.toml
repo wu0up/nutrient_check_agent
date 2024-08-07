@@ -52,6 +52,7 @@ loguru = "^0.7.2"
 transformers = "^4.42.4"
 langchain-openai = "^0.1.17"
 langchain-experimental = "^0.0.62"
+llama-index = "^0.10.62"
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = [ "F401",]
