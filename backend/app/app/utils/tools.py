@@ -8,7 +8,7 @@ from langchain_core.tools import tool
 import httpx
 # from app.utils import t5_pipe
 # from fastapi.concurrency import run_in_threadpool
-from app.utils.interface import chatllm
+from app.utils.interface import chatllm, llama31, gemma
 from app.utils.prompt_zero import text_prompt, image_system_prompt
 import re, base64, requests, json
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -220,6 +220,8 @@ class NutrientSearchTool(BaseTool):
         params = {
             'api_key': api_key,
             'query': food_name,
+            "pageSize": 10,
+            "pageNumber": 1
         }
         async with httpx.AsyncClient() as client:
             response = await client.get(base_url, params=params)
@@ -227,7 +229,7 @@ class NutrientSearchTool(BaseTool):
         if response.status_code == 200:
             # Parse the response to get the first food item
             food_item = response.json()['foods'][0]
-
+            print("get response success")
             # Extract relevant nutrient information
             nutrient_info = {'Food': food_item['description']}
             nutrient_info['servingSize'] = 100
@@ -311,6 +313,8 @@ def NutrientSearch(food_name: str):
     params = {
         'api_key': api_key,
         'query': food_name,
+        "pageSize": 10,
+        "pageNumber": 1
     }
     response = requests.request(
         "get",
@@ -423,40 +427,18 @@ class FoodIdentifyTool(BaseTool):
 #     return message
 
 
+#經過測試llama3.1加上you are good at math後，計算能力增加；gemma則沒有特別的表現
+
 def NutrientCalculate(weight: float, nutrient_dict: dict):
     """Useful when asked to estimate nutrient information about food, by use weight and nutrient data to calculate the nutrient information about food"""
 
-    # def create_agent_no_tool(llm, system_message: str):
-    #     """Create an agent."""
-    #     # file_path = r"C:\Users\PJ-Lin\Documents\LLM\multi_tool\food_eva.jpg"
-    #     # with open(file_path, 'rb') as file:
-    #     #     image_data = base64.b64encode(file.read()).decode("utf-8")
-    #     prompt = ChatPromptTemplate.from_messages([
-    #         # (
-    #         #     "system",
-    #         #     # "You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.as reciving an image, you need to identify the items in the image is food or not. if the image is food, you need to identify food name and food weight.",
-    #         system_message,
-    #         # ),
-    #         # MessagesPlaceholder(variable_name="messages"),
-    #         (
-    #             "human",
-    #             [{
-    #                 "type": "text",
-    #                 "text": f"{system_message}"
-    #             }],
-    #         ),
-    #     ])
-    #     prompt = prompt.partial(system_message=system_message)
-
-    #     return prompt | llm.bind_tools([NutrientInfo])
-
     nutrient_dict_str = json.dumps(nutrient_dict)
-    query = f"you know the weight of food is {weight}, and each nutrient per serving in nutrient info: {nutrient_dict_str}, you also know serving size is servingSize in nutrient_dict_str, your task is to calculate the food nutrient based on weight {weight} and nutrient info {nutrient_dict_str} and provide the food nutrient. think step by step and provide reference(nutirent_dict)."
-    # prompt = text_prompt(query)
-    # response = await chat.agenerate([[HumanMessage(content=query)]])
-    # response = agent.invoke({"messages": HumanMessage([query])})
-    # agent = create_agent_no_tool(chatllm, query)
-    response = chatllm.invoke(query)
+    query = f"""you are good at math.you know the weight of food is {weight}, and each nutrient per serving size in nutrient info: {nutrient_dict_str}, 
+    you also know serving size is servingSize in nutrient_dict_str, 
+    your task is to calculate the food nutrient based on weight {weight} and nutrient info {nutrient_dict_str} and provide the food nutrient. 
+    display the reference {nutrient_dict_str} from usda and answer you calculated in response.
+    """
+    response = llama31.invoke(query)
     print('response', response)
 
     return response

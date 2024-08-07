@@ -35,3 +35,15 @@ chatllm = OllamaFunctions(model=p.OLLAMA_BASE_MODEL,
                           request_timeout=1800,
                           temperature=0,
                           format="json")
+
+llama31 = OllamaFunctions(model="llama3.1",
+                          base_url=p.OLLAMA_BASE_URL,
+                          request_timeout=1800,
+                          temperature=0,
+                          format="json")
+
+gemma = OllamaFunctions(model="gemma",
+                        base_url=p.OLLAMA_BASE_URL,
+                        request_timeout=1800,
+                        temperature=0,
+                        format="json")

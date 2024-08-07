@@ -86,6 +86,10 @@ class FoodInfo(BaseModel):
     """Always use this tool to structure your response to the user."""
     food_name: str = Field(description="name of image's food")
     weight: float = Field(description="the weight estimate from food")
+    is_food: bool = Field(
+        description=
+        "can detect food and is_food value is True; if can not determine or detect food, the value of is_food is False"
+    )
 
 
 def create_agent_no_tool(llm, system_message: str):
@@ -114,8 +118,6 @@ def create_agent_no_tool(llm, system_message: str):
     prompt = prompt.partial(system_message=system_message)
 
     return prompt | llm.bind_tools([FoodInfo])
-
-
 
 
 # Helper function to create a node for a given agent
@@ -163,10 +165,12 @@ def agent_identify_node(prompt, agent):
     food_info = result.tool_calls[-1]["args"]
     name = food_info["food_name"]
     weight = food_info["weight"]
+    is_food = food_info['is_food']
     tool_call = result.tool_calls.copy()
     tool_call[-1]['name'] = "NutrientSearchTool"
     # We convert the agent output into a format that is suitable to append to the global state
-    weight = float(weight)
+    if is_food:
+        weight = float(weight)
     # else:
     #     # result = AIMessage(**result.dict(exclude={"type", "name"}), name=name)
     #     result = HumanMessage(content=result)
@@ -174,7 +178,8 @@ def agent_identify_node(prompt, agent):
         # Since we have a strict workflow, we can
         # track the sender so we know who to pass to next.
         "food_name": name,
-        "weight": weight
+        "weight": weight,
+        "is_food": is_food
     }
 
 
@@ -239,8 +244,12 @@ nutrient_identify_agent = create_agent_no_tool(
     system_message=
     #     """as reciving an image, you need to identify the items in the image is food or not.
     # if the image is food, you need to identify food name and food weight. """,
-    """You are a highly knowledgeable and professional nutritionist with expertise in analyzing meal components and evaluating their caloric content.
-    as reciving an image, you need to identify the items in the image is food or not. if the image is food, you need to identify food name and food weight(grams). """,
+    """You are a highly knowledgeable and professional nutritionist with expertise in 
+    analyzing meal components and evaluating their caloric content.
+    as reciving an image, you need to identify the items in the image is food or not. 
+    if image is food, make is_food value to True.
+    if the image is food, you need to identify food name and food weight(grams). 
+    if image is not food or can not detect food, make is_food to False""",
 )
 
 
@@ -250,6 +259,9 @@ nutrient_identify_agent = create_agent_no_tool(
 # )
 def get_all_node(prompt):
     food_info = agent_identify_node(prompt, nutrient_identify_agent)
+    print('food_info', food_info)
+    if not food_info['is_food']:
+        return "there is no food in image"
     nutriend_dict = tool_agent(food_info, NutrientSearch)
 
     food_info['nutrient_dict'] = nutriend_dict

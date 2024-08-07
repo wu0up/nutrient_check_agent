@@ -9,29 +9,25 @@ from streamlit_float import float_init
 
 float_init()
 
-"""
-無法同時input text and image
-"""
 
 async def retrieve_bot_response(text, image):
     async with websockets.connect(
             "ws://192.168.208.1:8000/api/v1/chat/tools") as websocket:
         message_data = {"message": text, "image": image}
         json_data = json.dumps(message_data)
+        last_response = ""
         stream_data = ""
-        print("stream_data start",stream_data)
+        print("stream_data start", stream_data)
         await websocket.send(json_data)
         counter = 0
         with st.empty():
-            
-            stream_str = ""
 
             try:
                 # 收到第一個訊息後，回延遲；之後才回復
                 while True:
                     counter += 1
                     response = await asyncio.wait_for(websocket.recv(),
-                                                      timeout=20)
+                                                      timeout=60)
                     response = json.loads(response)
                     print(f'response:{response}')
 
@@ -41,12 +37,15 @@ async def retrieve_bot_response(text, image):
                     # if response["response"] == "":
                     #     break
                     # stream_str += response["response"]
+                    last_response = response
                     stream_data = st.write(response)
-                    stream_data = response
             except asyncio.TimeoutError:
-                st.warning("Connection timed out. Closing the connection.")
-        print("stream_data",stream_data)
-        return stream_data
+                # st.warning("Connection timed out. Closing the connection.")
+                print("Connection timed out. Closing the connection.")
+        print("stream_data", stream_data, type(stream_data))
+
+        return last_response if stream_data in ["", None, "None"
+                                                ] else stream_data
 
 
 st.title("Simple chat")
@@ -91,7 +90,8 @@ if prompt or image_data:
         message_placeholder = st.empty()
         full_response = asyncio.new_event_loop().run_until_complete(
             retrieve_bot_response(prompt, image_data))
-
+        print("full_response", full_response, type(full_response))
+        # message_placeholder.markdown(full_response)
     # Add assistant response to chat history
     st.session_state.messages.append({
         "role": "assistant",

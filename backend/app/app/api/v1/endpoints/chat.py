@@ -130,8 +130,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
             graph_result = get_all_node(prompt)
             print('graph_result', graph_result)
-            result = graph_result.content
-
+            if not isinstance(graph_result, str):
+                result = graph_result.content
+            else:
+                result = graph_result
             await websocket.send_text(json.dumps(result))
 
         except WebSocketDisconnect:

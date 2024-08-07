@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     #     "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", env="TAVILY_API_KEY")
     """OLLMA"""
     OLLAMA_BASE_URL: Optional[str] = Field(
-        "https://bfa7-34-45-61-118.ngrok-free.app", env="OLLAMA_BASE_URL")
+        "https://72b4-35-224-168-76.ngrok-free.app", env="OLLAMA_BASE_URL")
     # OLLAMA_BASE_MODEL: Optional[str] = Field("gemma2", env="OLLAMA_BASE_MODEL")
     OLLAMA_BASE_MODEL: Optional[str] = Field("llava", env="OLLAMA_BASE_MODEL")
     """FOOD DATABASE"""
