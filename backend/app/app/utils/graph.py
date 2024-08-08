@@ -244,7 +244,7 @@ async def a_get_all_node(prompt):
         return
     yield {"processing": {"nutrient_identify_agent": food_info}}
     nutriend_dict =await tool_agent(food_info, NutrientSearch)
-    yield {"processing": {"NutrientSearch":nutriend_dict}}
+    yield {"processing": {"nutrient_search_agent":nutriend_dict}}
 
     food_info['nutrient_dict'] = nutriend_dict
 

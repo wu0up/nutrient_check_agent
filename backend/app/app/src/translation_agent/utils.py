@@ -13,6 +13,7 @@ from llama_index.core import Settings
 from llama_index.core.llms import ChatMessage
 from llama_index.core.node_parser import SentenceSplitter
 from app.core.config import settings as p
+from datetime import datetime
 
 from icecream import ic
 
@@ -152,11 +153,11 @@ Do not provide any explanations or text apart from the translation.
 {source_lang}: {source_text}
 
 {target_lang}:"""
-    print('in one_chunk_initial_translation')
+
     prompt = translation_prompt.format(source_text=source_text)
 
     translation = get_completion(prompt, system_message=system_message)
-    print('end get one_chunk_initial_translation')
+
     return translation
 
 
@@ -237,9 +238,9 @@ Output only the suggestions and nothing else."""
         source_text=source_text,
         translation_1=translation_1,
     )
-    print('start one_chunk_reflect_on_translation')
+
     reflection = get_completion(prompt, system_message=system_message)
-    print('end one_chunk_reflect_on_translation')
+
     return reflection
 
 
@@ -318,6 +319,7 @@ def one_chunk_translate_text(source_lang: str,
     Returns:
         str: The improved translation of the source text.
     """
+    print("start translation", datetime.now())
     translation_1 = one_chunk_initial_translation(source_lang, target_lang,
                                                   source_text)
 
@@ -327,7 +329,7 @@ def one_chunk_translate_text(source_lang: str,
     translation_2 = one_chunk_improve_translation(source_lang, target_lang,
                                                   source_text, translation_1,
                                                   reflection)
-
+    print("end translation", datetime.now())
     return translation_1, reflection, translation_2
 
 
