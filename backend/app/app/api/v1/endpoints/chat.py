@@ -131,13 +131,14 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps(result))
             else:
                 if not isinstance(result.get('END'), str):
+                    await websocket.send_text(json.dumps({"Processing":{"nutrient_calculate_agent":result.get('END').content}}))
                     res = huanik("English", "Traditional chinese",
                                  result.get('END').content, "Taiwan", 5000)
                     print('yield result', len(result), "time", datetime.now())
                     await websocket.send_text(json.dumps({"END":res}))
                 else:
                     print('yield result', len(result), "time", datetime.now())
-                    await websocket.send_text(json.dumps(result.get('END')))
+                    await websocket.send_text(json.dumps(result))
 
     while True:
         try:

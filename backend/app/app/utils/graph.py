@@ -242,9 +242,9 @@ async def a_get_all_node(prompt):
     if not food_info['is_food']:
         yield {"END":"圖片中沒有食物"}
         return
-    yield {"processing": food_info}
+    yield {"processing": {"nutrient_identify_agent": food_info}}
     nutriend_dict =await tool_agent(food_info, NutrientSearch)
-    yield {"processing": nutriend_dict}
+    yield {"processing": {"NutrientSearch":nutriend_dict}}
 
     food_info['nutrient_dict'] = nutriend_dict
 

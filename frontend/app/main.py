@@ -57,25 +57,28 @@ async def retrieve_bot_response(text, image):
         await websocket.send(json_data)
 
         accumulated_response = ""
-        placeholder = st.empty()
 
+        # with st.empty():
         try:
             while True:
-                response = await asyncio.wait_for(websocket.recv(), timeout=1200)
+                response = await asyncio.wait_for(websocket.recv(), timeout=300)
                 # response = await websocket.recv()
                 response = json.loads(response)
                 print(f'response:{response}')
 
                 if "END" in response:
                     accumulated_response =response.get('END')
+                    st.write(f'<p style="background-color:#FFF380;">{accumulated_response}</p>', unsafe_allow_html=True)
                 else:
-                    accumulated_response = json.dumps(response)
+                    # accumulated_response = json.dumps(response)
+                    accumulated_response = response
+                    st.markdown(f'<p style="background-color:#FAFAD2;">{accumulated_response}</p>', unsafe_allow_html=True)
 
-                st.write(f'<h1 style="color:#33ff33;font-size:24px;">{accumulated_response}</h1>', unsafe_allow_html=True)
+                
 
         except asyncio.TimeoutError:
             st.warning("Connection timed out. Closing the connection.")
-        
+    
         return accumulated_response
 
 
@@ -91,7 +94,8 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Accept user input
-prompt = st.chat_input("What is up?")
+# prompt = st.chat_input("What is up?")
+# prompt = "食物圖片如下:"
 
 # Accept image upload
 uploaded_file = st.file_uploader("Upload an image",
@@ -103,8 +107,11 @@ if uploaded_file is not None:
     image_data = base64.b64encode(uploaded_file.read()).decode("utf-8")
 
 # Process the input and image if provided
-if prompt or image_data:
+# if prompt or image_data:
+st.empty()
+if image_data:
     # Add user message to chat history
+    prompt = "食物圖片如下"
     user_message = {"role": "user", "content": prompt}
     if image_data:
         user_message["image"] = image_data
