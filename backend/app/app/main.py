@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
+from app.utils.graph import get_all_node, a_get_all_node
 
 
 @asynccontextmanager
@@ -77,50 +78,33 @@ async def stream_chat(message: Message, file: UploadFile = File(...)):
 
 
 # @app.get("/chat", response_class=HTMLResponse)
-# async def chat():
-#         data = await websocket.receive_json()
+# async def chat(*,image: UploadFile = File(...),request: Request):
+
+#     async def process_data(data):
 #         user_message = data["message"]
 #         user_img = data["image"]
-#         user_message_card = create_adaptive_card(user_message)
+#         user_message = image_prompt(user_img)
+#         prompt = {"messages": user_message, "image_url": user_img}
 
-#         resp = IChatResponse(
-#             sender="you",
-#             message=user_message_card.to_dict(),
-#             type="start",
-#             message_id=str(uuid7()),
-#             id=str(uuid7()),
-#         )
+#         async for result in a_get_all_node(prompt):
+#             print('yield result', result)
+#             if 'processing' in result:
+#                 await websocket.send_text(json.dumps(result))
+#             else:
+#                 if not isinstance(result.get('END'), str):
+#                     res = huanik("English", "Traditional chinese",
+#                                  result.get('END').content, "Taiwan", 5000)
+#                     await websocket.send_text(json.dumps(res))
+#                 else:
+#                     await websocket.send_text(json.dumps(result.get('END')))
 
-#         await websocket.send_json(resp.dict())
-#         message_id: str = str(uuid7())
-#         custom_handler = CustomFinalStreamingStdOutCallbackHandler(
-#             websocket, message_id=message_id)
-
-#         tools = [
-#             # GeneralKnowledgeTool(),
-#             # PokemonSearchTool(),
-#             # ImageSearchTool(),
-#             # YoutubeSearchTool(),
-#             # GeneralWeatherTool(),
-#             NutrientSearchTool(),
-#             NutrientCalTool()
-#         ]
-
-#         # llm = ChatOpenAI(
-#         #     streaming=True,
-#         #     temperature=0,
-#         # )
-
-#         #TODO: handle memory
-#         agent_executor = create_react_agent(defaultllm,
-#                                             tools,
-#                                             zero_agent_prompt,
-#                                             checkpointer=memory)
-
-#         await agent_executor.arun(input=user_message,
-#                                     callbacks=[custom_handler])
-
-#     return chat_html
+#     while True:
+#         try:
+#             data = await websocket.receive_json()
+#             asyncio.create_task(process_data(data))
+#         except WebSocketDisconnect:
+#             logging.info("websocket disconnect")
+#             break
 
 # Add Routers
 app.include_router(api_router_v1, prefix=settings.API_V1_STR)

@@ -43,7 +43,6 @@ from langchain_core.output_parsers import JsonOutputParser
 import base64
 from langchain_core.tools import StructuredTool
 
-
 # tools = [NutrientSearchTool, NutrientCalTool, FoodIdentifyTool]
 tools = [NutrientCalculate, NutrientSearch]
 llm = chatllm
@@ -157,12 +156,10 @@ def agent_cal_node(state: StateGraph, agent):
     }
 
 
-# 如果name是空,則return no food detection
-# def agent_identify_node(state: StateGraph, agent):
-def agent_identify_node(prompt, agent):
+async def agent_identify_node(prompt, agent):
     result = agent.invoke(prompt)
-    print(f"result in agent_identify:{result}")
-    print(f"result in agent_identify:{result.tool_calls}")
+    # print(f"result in agent_identify:{result}")
+    # print(f"result in agent_identify:{result.tool_calls}")
 
     food_info = result.tool_calls[-1]["args"]
     name = food_info["food_name"]
@@ -170,45 +167,35 @@ def agent_identify_node(prompt, agent):
     is_food = food_info['is_food']
     tool_call = result.tool_calls.copy()
     tool_call[-1]['name'] = "NutrientSearchTool"
-    # We convert the agent output into a format that is suitable to append to the global state
+
     if is_food:
         weight = float(weight)
-    # else:
-    #     # result = AIMessage(**result.dict(exclude={"type", "name"}), name=name)
-    #     result = HumanMessage(content=result)
+
     return {
-        # Since we have a strict workflow, we can
-        # track the sender so we know who to pass to next.
+
         "food_name": name,
         "weight": weight,
         "is_food": is_food
     }
 
 
-# nutrient_search_agent = create_agent(
-#     llm,
-#     ["NutrientSearch"],
-#     [NutrientSearch],
-#     system_message="input food name to tool to return the nutrient info",
-# )
 
-
-def tool_agent(state, tool):
+async def tool_agent(state, tool):
     # def tool_agent(state: StateGraph, tool):
-    print("state", state)
+    # print("state", state)
     calculator = StructuredTool.from_function(func=tool)
     input = {
         'food_name': state.get('food_name'),
         'weight': state.get('weight')
     }
     result = calculator.invoke(input)
-    print('result in tool agent', result)
+    # print('result in tool agent', result)
 
     return result
 
 
-def tool_agent_cal(state, tool):
-    print("tool_agent_cal state", state)
+async def tool_agent_cal(state, tool):
+    # print("tool_agent_cal state", state)
     calculator = StructuredTool.from_function(func=tool)
     input = {
         'weight': state.get('weight'),
@@ -219,60 +206,6 @@ def tool_agent_cal(state, tool):
     # return ""
     return result
 
-
-# tool node
-# nutrient_search_node = functools.partial(
-#     agent_search_node,
-#     agent=nutrient_search_agent,
-# )
-# tool_node = ToolNode([NutrientSearch])
-# nutrient_search_node = functools.partial( tool_agent, NutrientSearch)
-
-# nutrient_cal_node = functools.partial( tool_agent_cal, NutrientCalculate)
-# nutrient_cal_agent = create_agent(
-#     llm,
-#     ["NutrientCalculate"],
-#     [NutrientCalculate],
-#     system_message=
-#     "input weight and nutrient dict to tool  and calculate the nutrient base on weight and nutrient_dict.",
-# )
-# nutrient_cal_node = functools.partial(
-#     agent_cal_node,
-#     agent=nutrient_cal_agent,
-# )
-
-
-def huanik(endpoint, model, api_key, source_lang, target_lang, source_text,
-           country, max_tokens):
-
-    ic(source_text)
-    if not source_text or source_lang == target_lang:
-        raise gr.Error("Please check the contents and options right.")
-
-    ta.model_load(endpoint, model, api_key)
-
-    source_text = re.sub(r'\n+', '\n', source_text)
-
-    init_translation, reflect_translation, final_translation = ta.translate(
-        source_lang=source_lang,
-        target_lang=target_lang,
-        source_text=source_text,
-        country=country,
-        max_tokens=max_tokens,
-    )
-
-    final_diff = gr.HighlightedText(diff_texts(init_translation,
-                                               final_translation),
-                                    label="Diff translation",
-                                    combine_adjacent=True,
-                                    show_legend=True,
-                                    visible=True,
-                                    color_map={
-                                        "removed": "red",
-                                        "added": "green"
-                                    })
-
-    return init_translation, reflect_translation, final_translation, final_diff
 
 
 nutrient_identify_agent = create_agent_no_tool(
@@ -289,15 +222,12 @@ nutrient_identify_agent = create_agent_no_tool(
 )
 
 
-# nutrient_identify_node = functools.partial(
-#     agent_identify_node,
-#     agent=nutrient_identify_agent,
-# )
+
 def get_all_node(prompt):
     food_info = agent_identify_node(prompt, nutrient_identify_agent)
-    print('food_info', food_info)
+    # print('food_info', food_info)
     if not food_info['is_food']:
-        return "there is no food in image"
+        return "圖片中沒有食物"
     nutriend_dict = tool_agent(food_info, NutrientSearch)
 
     food_info['nutrient_dict'] = nutriend_dict
@@ -305,6 +235,22 @@ def get_all_node(prompt):
     res = tool_agent_cal(food_info, NutrientCalculate)
 
     return res
+
+async def a_get_all_node(prompt):
+    food_info =await agent_identify_node(prompt, nutrient_identify_agent)
+
+    if not food_info['is_food']:
+        yield {"END":"圖片中沒有食物"}
+        return
+    yield {"processing": food_info}
+    nutriend_dict =await tool_agent(food_info, NutrientSearch)
+    yield {"processing": nutriend_dict}
+
+    food_info['nutrient_dict'] = nutriend_dict
+
+    res =await tool_agent_cal(food_info, NutrientCalculate)
+
+    yield {"END":res}
 
 
 # workflow = StateGraph(AgentState)

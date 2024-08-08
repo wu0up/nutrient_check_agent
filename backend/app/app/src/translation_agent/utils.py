@@ -8,7 +8,7 @@ from typing import Union
 import tiktoken
 
 from llama_index.llms.ollama import Ollama
-
+# from app.utils.interface import llama31
 from llama_index.core import Settings
 from llama_index.core.llms import ChatMessage
 from llama_index.core.node_parser import SentenceSplitter
@@ -56,7 +56,7 @@ def model_load(
     #         api_key=api_key,
     #     )
     # elif endpoint == "ollama":
-    llm = Ollama(base_url=p.OLLAMA_BASE_MODEL,
+    llm = Ollama(base_url=p.OLLAMA_BASE_URL,
                  model=model,
                  temperature=0,
                  request_timeout=120.0)
@@ -152,11 +152,11 @@ Do not provide any explanations or text apart from the translation.
 {source_lang}: {source_text}
 
 {target_lang}:"""
-
+    print('in one_chunk_initial_translation')
     prompt = translation_prompt.format(source_text=source_text)
 
     translation = get_completion(prompt, system_message=system_message)
-
+    print('end get one_chunk_initial_translation')
     return translation
 
 
@@ -237,7 +237,9 @@ Output only the suggestions and nothing else."""
         source_text=source_text,
         translation_1=translation_1,
     )
+    print('start one_chunk_reflect_on_translation')
     reflection = get_completion(prompt, system_message=system_message)
+    print('end one_chunk_reflect_on_translation')
     return reflection
 
 
