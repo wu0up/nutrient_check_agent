@@ -150,7 +150,7 @@ def one_chunk_initial_translation(source_lang: str, target_lang: str,
 
     translation_prompt = f"""This is an {source_lang} to {target_lang} translation, please provide the {target_lang} translation for this text. \
 Do not provide any explanations or text apart from the translation.
-{source_lang}: {source_text}
+{source_lang}: {{source_text}}
 
 {target_lang}:"""
 
@@ -192,11 +192,11 @@ The final style and tone of the translation should match the style of {target_la
 The source text and initial translation, delimited by XML tags <SOURCE_TEXT></SOURCE_TEXT> and <TRANSLATION></TRANSLATION>, are as follows:
 
 <SOURCE_TEXT>
-{source_text}
+{{source_text}}
 </SOURCE_TEXT>
 
 <TRANSLATION>
-{translation_1}
+{{translation_1}}
 </TRANSLATION>
 
 When writing suggestions, pay attention to whether there are ways to improve the translation's \n\
@@ -215,11 +215,11 @@ Output only the suggestions and nothing else."""
 The source text and initial translation, delimited by XML tags <SOURCE_TEXT></SOURCE_TEXT> and <TRANSLATION></TRANSLATION>, are as follows:
 
 <SOURCE_TEXT>
-{source_text}
+{{source_text}}
 </SOURCE_TEXT>
 
 <TRANSLATION>
-{translation_1}
+{{translation_1}}
 </TRANSLATION>
 
 When writing suggestions, pay attention to whether there are ways to improve the translation's \n\
@@ -320,6 +320,7 @@ def one_chunk_translate_text(source_lang: str,
         str: The improved translation of the source text.
     """
     print("start translation", datetime.now())
+    print("source_text", type(source_text))
     translation_1 = one_chunk_initial_translation(source_lang, target_lang,
                                                   source_text)
 

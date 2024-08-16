@@ -32,13 +32,17 @@ class Settings(BaseSettings):
     LANGCHAIN_PROJECT: str = Field("Multi_tool", env="LANGCHAIN_PROJECT")
     """LLM"""
     OPENAI_API_TYPE: Optional[str] = Field("local", env="OPENAI_API_TYPE")
-    OPENAI_API_VERSION: Optional[str] = Field("2024-02-15-preview",
+    # OPENAI_API_VERSION: Optional[str] = Field("2024-02-15-preview",
+    #                                           env="OPENAI_API_VERSION")]
+    OPENAI_API_VERSION: Optional[str] = Field("2024-03-01-preview",
                                               env="OPENAI_API_VERSION")
     OPENAI_API_KEY: Optional[str] = Field("546c2da351d0469eb3d6f9b76b4702d0",
                                           env="OPENAI_API_KEY")
     OPENAI_ENDPOINT: Optional[str] = Field(
         "https://ifactory-openai.openai.azure.com", env="OPENAI_ENDPOINT")
-    OPENAI_API_DEPLOYMENT: Optional[str] = Field("gpt-35-turbo-0613",
+    # OPENAI_API_DEPLOYMENT: Optional[str] = Field("gpt-35-turbo-0613",
+    #                                              env="OPENAI_API_DEPLOYMENT")
+    OPENAI_API_DEPLOYMENT: Optional[str] = Field("gpt-4o-mini",
                                                  env="OPENAI_API_DEPLOYMENT")
     OPENAI_API_DEPLOYMENT_ADA: Optional[str] = Field(
         "text-embedding-ada-002", env="OPENAI_API_DEPLOYMENT_ADA")
@@ -54,7 +58,7 @@ class Settings(BaseSettings):
     #     "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", env="TAVILY_API_KEY")
     """OLLMA"""
     OLLAMA_BASE_URL: Optional[str] = Field(
-        "https://94a8-104-199-121-61.ngrok-free.app", env="OLLAMA_BASE_URL")
+        "https://8174-35-204-20-90.ngrok-free.app", env="OLLAMA_BASE_URL")
     # OLLAMA_BASE_MODEL: Optional[str] = Field("gemma2", env="OLLAMA_BASE_MODEL")
     OLLAMA_BASE_MODEL: Optional[str] = Field("llava", env="OLLAMA_BASE_MODEL")
     """FOOD DATABASE"""

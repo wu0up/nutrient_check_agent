@@ -51,7 +51,9 @@ float_init()
 #         #                                         ] else stream_data
 #         return last_response
 async def retrieve_bot_response(text, image):
-    async with websockets.connect("ws://192.168.208.1:8000/api/v1/chat/tools", ping_timeout=60, ping_interval=10) as websocket:
+    #
+    #ws://192.168.208.1:8000/api/v1/chat/tools
+    async with websockets.connect("ws://127.0.0.1:8000/api/v1/chat/tools", ping_timeout=60, ping_interval=10) as websocket:
         message_data = {"message": text, "image": image}
         json_data = json.dumps(message_data)
         await websocket.send(json_data)
