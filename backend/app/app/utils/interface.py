@@ -84,12 +84,12 @@ def load_language_model(model_name: str, endpoint:str) -> CustomLiteLLM:
     
 
 
-# chatllm = OllamaFunctions(model=p.OLLAMA_BASE_MODEL,
-#                           base_url=p.OLLAMA_BASE_URL,
-#                           request_timeout=1800,
-#                           temperature=0,
-#                           format="json")
-chatllm = load_language_model(model_name= ollama_model, endpoint =ollama_endpoint )
+chatllm = OllamaFunctions(model=p.OLLAMA_BASE_MODEL,
+                          base_url=p.OLLAMA_BASE_URL,
+                          request_timeout=1800,
+                          temperature=0,
+                          format="json")
+# chatllm = load_language_model(model_name= ollama_model, endpoint =ollama_endpoint )
 
 llama31 = OllamaFunctions(model="llama3.1",
                           base_url=p.OLLAMA_BASE_URL,

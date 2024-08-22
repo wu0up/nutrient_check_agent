@@ -95,75 +95,6 @@ Sprite: {pokemon_image} \n
 """
 
 
-# class ImageSearchTool(BaseTool):
-#     name = "search_image"
-#     description = " Useful when asked to answer information about find images URL"
-#     return_direct = True
-
-#     def __init__(self):
-#         super().__init__()
-
-#     def _run(self, query: str, run_manager: Optional[Any] = None) -> str:
-#         """Use the tool."""
-#         pass
-
-#     async def _arun(self,
-#                     query: str,
-#                     run_manager: Optional[Any] = None) -> str:
-#         """Use the tool asynchronously."""
-#         async with httpx.AsyncClient() as client:
-#             if settings.UNSPLASH_API_KEY == "":
-#                 return "You need to set a UNSPLASH_API_KEY"
-
-#             unsplash_url = unsplash_api_url + query.lower()
-#             response = await client.get(unsplash_url)
-#             body = response.json()
-#             results = body["results"]
-#             images_urls = []
-#             for result in results:
-#                 image_url = result["urls"]["small"]
-#                 images_urls.append(image_url)
-#             image_list_string = "\n".join([
-#                 f"{i+1}. ![Image {i+1}]({url})"
-#                 for i, url in enumerate(images_urls)
-#             ])
-#             return image_list_string
-
-# class YoutubeSearchTool(BaseTool):
-#     name = "search_videos"
-#     description = " Useful when asked to answer information about find videos"
-#     return_direct = True
-
-#     def __init__(self):
-#         super().__init__()
-
-#     def _run(self, query: str, run_manager: Optional[Any] = None) -> str:
-#         """Use the tool."""
-#         pass
-
-#     async def _arun(self,
-#                     query: str,
-#                     run_manager: Optional[Any] = None) -> str:
-#         """Use the tool asynchronously."""
-#         async with httpx.AsyncClient() as client:
-#             if not settings.SERP_API_KEY or settings.SERP_API_KEY == "":
-#                 return "You need to set a SERP_API_KEY"
-
-#             params = {
-#                 "engine": "youtube",
-#                 "search_query": query,
-#                 "api_key": settings.SERP_API_KEY,
-#             }
-#             search = GoogleSearch(params)
-#             results = search.get_dict()
-#             videos = results["video_results"]
-#             video_list_string = "\n".join([
-#                 f"{i+1}. [{video['title']}]({video['link']})"
-#                 for i, video in enumerate(videos)
-#             ])
-#             return video_list_string
-
-
 class GeneralWeatherTool(BaseTool):
     name = "Weather"
     description = "useful for when you need to answer questions about weather"
@@ -252,53 +183,6 @@ class NutrientSearchTool(BaseTool):
         else:
             # Handle API request failure
             return {'error': 'Unable to fetch nutrient information'}
-
-
-# @tool
-# async def NutrientSearch(food_name: str):
-#     """ Useful when asked to answer nutrient data about food"""
-#     api_key = 'AJkI7imE8qiJN6F2a6F3kpdIlzogNsmCXDflzLTx'
-#     base_url = p.FOOD_DATABASE_URL
-#     nutrient_lst = [
-#         'Protein', "Total lipid (fat)", "Carbohydrate, by difference",
-#         "Energy", "Total Sugars"
-#     ]
-#     # Make a request to the API to search for the food
-#     params = {
-#         'api_key': api_key,
-#         'query': food_name,
-#     }
-#     async with httpx.AsyncClient() as client:
-#         response = await client.get(base_url, params=params)
-
-#     if response.status_code == 200:
-#         # Parse the response to get the first food item
-#         food_item = response.json()['foods'][0]
-
-#         # Extract relevant nutrient information
-#         nutrient_info = {'Food': food_item['description']}
-#         nutrient_info['servingSize'] = 100
-#         nutrient_info['servingSizeUnit'] = 'g'
-#         if 'servingSize' in food_item:
-#             nutrient_info['servingSize'] = food_item['servingSize']
-
-#         if 'servingSizeUnit' in food_item:
-#             nutrient_info['servingSizeUnit'] = food_item['servingSizeUnit']
-#         # Check if 'foodNutrients' key is present
-#         if 'foodNutrients' in food_item:
-#             # Extract nutrient information based on the available keys
-#             for nutrient in food_item['foodNutrients']:
-#                 nutrient_name = nutrient.get('nutrientName', '')
-
-#                 if nutrient_name in nutrient_lst:
-
-#                     nutrient_amount = nutrient.get('value', '')
-#                     nutrient_info[nutrient_name] = nutrient_amount
-
-#         return nutrient_info
-#     else:
-#         # Handle API request failure
-#         return {'error': 'Unable to fetch nutrient information'}
 
 
 def NutrientSearch(food_name: str):

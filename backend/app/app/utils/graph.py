@@ -254,31 +254,3 @@ async def a_get_all_node(prompt):
     yield {"END":res}
 
 
-# workflow = StateGraph(AgentState)
-
-# workflow.add_node("Nutrient_Identify_Agent", nutrient_identify_node)
-# workflow.add_node("Nutrient_Search_Agent",
-#                   nutrient_search_node)  # 把tools打包成agent直接使用
-# workflow.add_node("Nutrient_Cal_Agent", nutrient_cal_node)
-# workflow.set_entry_point("Nutrient_Identify_Agent")
-
-# workflow.add_edge("Nutrient_Identify_Agent", "Nutrient_Search_Agent")
-# workflow.add_edge("Nutrient_Search_Agent", "Nutrient_Cal_Agent")
-# workflow.add_edge("Nutrient_Cal_Agent", END)
-
-# FoodGraph = workflow.compile()
-# """
-# no tool agent to build langgraph
-# """
-# workflow_test = StateGraph(AgentState)
-
-# workflow_test.add_node("Nutrient_Identify_Agent", nutrient_identify_node)
-# # workflow.add_node("Nutrient_Search_Agent", nutrient_search_node)
-# # workflow.add_node("Nutrient_Cal_Agent", nutrient_cal_node)
-# workflow_test.set_entry_point("Nutrient_Identify_Agent")
-
-# # workflow_test.add_edge("Nutrient_Identify_Agent", "Nutrient_Search_Agent")
-# # workflow_test.add_edge("Nutrient_Search_Agent", "Nutrient_Cal_Agent")
-# workflow_test.add_edge("Nutrient_Identify_Agent", END)
-
-# FoodGraph_test = workflow_test.compile()
