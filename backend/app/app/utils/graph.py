@@ -1,29 +1,13 @@
-from typing import Annotated
-from typing_extensions import TypedDict
-from langgraph.graph.message import AnyMessage, add_messages
-from datetime import datetime
 from langchain_core.prompts import ChatPromptTemplate
 
-from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableConfig
 from langchain_community.chat_models import ChatOllama
 
-from langgraph.checkpoint.sqlite import SqliteSaver
-from langgraph.graph import END, StateGraph
-from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_core.runnables import RunnableLambda
-from langgraph.checkpoint.sqlite import SqliteSaver
-from langgraph.graph import END, StateGraph
-from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_core.runnables import RunnableLambda
-from langchain_core.messages import ToolMessage
-# from app.utils.tools import NutrientSearchTool, NutrientCalTool, FoodIdentifyTool
 from app.utils.tools import NutrientSearch, NutrientCalculate
 from app.utils.interface import chatllm
 from typing import Optional
 from langchain_core.pydantic_v1 import BaseModel, Field
-
+from langfuse.callback import CallbackHandler
 from langchain_core.messages import (
     BaseMessage,
     HumanMessage,
@@ -31,58 +15,26 @@ from langchain_core.messages import (
 )
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from langgraph.graph import END, StateGraph
-
-from langgraph.prebuilt import create_react_agent
-
-import functools
-
-from langchain_core.messages import AIMessage
-from langchain_core.output_parsers import JsonOutputParser
-
-import base64
 from langchain_core.tools import StructuredTool
 
-# tools = [NutrientSearchTool, NutrientCalTool, FoodIdentifyTool]
+from langchain.globals import set_debug
+from app.core.config import settings as p
+set_debug(True)
+
 tools = [NutrientCalculate, NutrientSearch]
 llm = chatllm
 
+import os
 
-class AgentState(TypedDict):
-    messages: Annotated[list[AnyMessage], add_messages]
-    image_url: Optional[str] = None
-    nutrient_dict: Optional[dict] = None
-    food_name: Optional[str] = None
-    weight: Optional[float] = None
-
-
-def create_agent(llm, tools_name, tools, system_message: str):
-    """Create an agent."""
-    prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
-            "You are a helpful AI assistant, collaborating with other assistants."
-            " Use the provided tools to progress towards answering the question."
-            " If you are unable to fully answer, that's OK, another assistant with different tools "
-            " will help where you left off. Execute what you can to make progress."
-            " If you or any of the other assistants have the final answer or deliverable,"
-            " prefix your response with FINAL ANSWER so the team knows to stop."
-            " You have access to the following tools: {tool_names}.\n{system_message}",
-        ),
-        # MessagesPlaceholder(variable_name="messages"),
-    ])
-    prompt = prompt.partial(system_message=system_message)
-    prompt = prompt.partial(tool_names=", ".join([tool
-                                                  for tool in tools_name]))
-    return prompt | llm.bind_tools(tools)
+langfuse_handler = CallbackHandler(
+            public_key=p.LANGFUSE_PUBLIC_KEY,
+            secret_key=p.LANGFUSE_SECRET_KEY, 
+            host=p.LANGFUSE_HOST
+        )
+config = {"callbacks": [langfuse_handler]}
 
 
-"""
-1. tool use
-2. parser
-"""
-
-
+# use
 class FoodInfo(BaseModel):
     """Always use this tool to structure your response to the user."""
     food_name: str = Field(description="name of image's food")
@@ -92,12 +44,9 @@ class FoodInfo(BaseModel):
         "can detect food and is_food value is True; if can not determine or detect food, the value of is_food is False"
     )
 
-
+# use
 def create_agent_no_tool(llm, system_message: str):
     """Create an agent."""
-    # file_path = r"C:\Users\PJ-Lin\Documents\LLM\multi_tool\food_eva.jpg"
-    # with open(file_path, 'rb') as file:
-    #     image_data = base64.b64encode(file.read()).decode("utf-8")
     prompt = ChatPromptTemplate.from_messages([
         # (
         #     "system",
@@ -121,44 +70,11 @@ def create_agent_no_tool(llm, system_message: str):
     return prompt | llm.bind_tools([FoodInfo])
 
 
-# Helper function to create a node for a given agent
-def agent_search_node(state: StateGraph, agent):
-    print('state', state)
-    food_name = state.get('food_name')
-    result = agent.invoke({"food_name": food_name})
-    # We convert the agent output into a format that is suitable to append to the global state
-    if isinstance(result, ToolMessage):
-        pass
-    else:
-        # result = AIMessage(**result.dict(exclude={"type", "name"}), name=name)
-        result = HumanMessage(content=result)
-    return {
-        "messages": [result],
-        "nutrient_dict": result
-        # Since we have a strict workflow, we can
-        # track the sender so we know who to pass to next.
-    }
-
-
-def agent_cal_node(state: StateGraph, agent):
-    result = agent.invoke(state)
-    # We convert the agent output into a format that is suitable to append to the global state
-    if isinstance(result, ToolMessage):
-        pass
-    else:
-        # result = AIMessage(**result.dict(exclude={"type", "name"}), name=name)
-        result = HumanMessage(content=result)
-    return {
-        "messages": [result],
-        # Since we have a strict workflow, we can
-        # track the sender so we know who to pass to next.
-        # "nutrient_dict":
-    }
-
-
+#use
 async def agent_identify_node(prompt, agent):
-    result = agent.invoke(prompt)
-    # print(f"result in agent_identify:{result}")
+    
+    result = agent.invoke(prompt ,config)
+    print(f"result in agent_identify:{result}")
     # print(f"result in agent_identify:{result.tool_calls}")
 
     food_info = result.tool_calls[-1]["args"]
@@ -179,10 +95,8 @@ async def agent_identify_node(prompt, agent):
     }
 
 
-
+#use
 async def tool_agent(state, tool):
-    # def tool_agent(state: StateGraph, tool):
-    # print("state", state)
     calculator = StructuredTool.from_function(func=tool)
     input = {
         'food_name': state.get('food_name'),
@@ -193,7 +107,7 @@ async def tool_agent(state, tool):
 
     return result
 
-
+#use
 async def tool_agent_cal(state, tool):
     # print("tool_agent_cal state", state)
     calculator = StructuredTool.from_function(func=tool)
@@ -207,7 +121,7 @@ async def tool_agent_cal(state, tool):
     return result
 
 
-
+# use
 nutrient_identify_agent = create_agent_no_tool(
     llm,
     system_message=

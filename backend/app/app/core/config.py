@@ -24,19 +24,15 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str] | list[AnyHttpUrl] = ["*"]
     """LangSmith"""
     LANGCHAIN_TRACING_V2: str = Field("true", env="LANGCHAIN_TRACING_V2")
-    # LANGCHAIN_API_KEY: str = Field("ls__17508d8a92ad40d0bdcecd12f5dea69b",
-    #                                env="LANGCHAIN_API_KEY")
     LANGCHAIN_API_KEY: str = Field(
-        "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",
+        "",
         env="LANGCHAIN_API_KEY")
     LANGCHAIN_PROJECT: str = Field("Multi_tool", env="LANGCHAIN_PROJECT")
     """LLM"""
     OPENAI_API_TYPE: Optional[str] = Field("local", env="OPENAI_API_TYPE")
-    # OPENAI_API_VERSION: Optional[str] = Field("2024-02-15-preview",
-    #                                           env="OPENAI_API_VERSION")]
     OPENAI_API_VERSION: Optional[str] = Field("2024-03-01-preview",
                                               env="OPENAI_API_VERSION")
-    OPENAI_API_KEY: Optional[str] = Field("546c2da351d0469eb3d6f9b76b4702d0",
+    OPENAI_API_KEY: Optional[str] = Field("",
                                           env="OPENAI_API_KEY")
     OPENAI_ENDPOINT: Optional[str] = Field(
         "https://ifactory-openai.openai.azure.com", env="OPENAI_ENDPOINT")
@@ -47,20 +43,17 @@ class Settings(BaseSettings):
     OPENAI_API_DEPLOYMENT_ADA: Optional[str] = Field(
         "text-embedding-ada-002", env="OPENAI_API_DEPLOYMENT_ADA")
 
-    # """MILVUS"""
-    # MILVUS_HOST: Optional[str] = Field("127.0.0.1", env="MILVUS_HOST")
-    # MILVUS_PORT: Optional[str] = Field("19530", env="MILVUS_PORT")
-    # MILVUS_COLLECTION: Optional[str] = Field("test_kdb_colleciotn",
-    #                                          env="MILVUS_COLLECTION")
-    # MILVUS_DATABASE: Optional[str] = Field("test_kdb", env="MILVUS_DATABASE")
-    # """TAVILY"""
-    # TAVILY_API_KEY: Optional[str] = Field(
-    #     "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", env="TAVILY_API_KEY")
     """OLLMA"""
     OLLAMA_BASE_URL: Optional[str] = Field(
-        "https://69e9-34-83-115-26.ngrok-free.app", env="OLLAMA_BASE_URL")
-    # OLLAMA_BASE_MODEL: Optional[str] = Field("gemma2", env="OLLAMA_BASE_MODEL")
+        "", env="OLLAMA_BASE_URL")
     OLLAMA_BASE_MODEL: Optional[str] = Field("llava", env="OLLAMA_BASE_MODEL")
+    
+        
+    """Agent Monitoring"""
+    LANGFUSE_PUBLIC_KEY:str=Field("", env="LANGFUSE_PUBLIC_KEY")
+    LANGFUSE_SECRET_KEY:str=Field("", env="LANGFUSE_SECRET_KEY")
+    LANGFUSE_HOST:str=Field("https://cloud.langfuse.com", env="LANGFUSE_HOST")
+    
     """FOOD DATABASE"""
     FOOD_DATABASE_URL: Optional[str] = Field(
         "https://api.nal.usda.gov/fdc/v1/foods/search",

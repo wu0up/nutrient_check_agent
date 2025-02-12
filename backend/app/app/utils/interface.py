@@ -10,52 +10,8 @@ import os
 from langchain_community.chat_models import ChatLiteLLM
 from typing import Optional
 
+
 __all__ = ["chatllm", "embeddings"]
-
-key_id = "sk-1234"
-os.environ["AZURE_OPENAI_API_KEY"] =key_id # 👈 Team's Key
-os.environ["OPENAI_API_VERSION"] ="2024-02-15-preview" # 👈 Team's Key
-
-api_endpoint = "http://127.0.0.1:4000"
-azure_model =  "azure/gpt-35-turbo-0613"
-ollama_model =  "ollama_chat/llava"
-
-ollama_endpoint =  "https://8174-35-204-20-90.ngrok-free.app"
-
-# if p.OPENAI_API_TYPE == "azure":
-#     chatllm = AzureChatOpenAI(azure_deployment=p.OPENAI_API_DEPLOYMENT,
-#                               openai_api_version=p.OPENAI_API_VERSION,
-#                               temperature=0)
-#     embeddings = AzureOpenAIEmbeddings(deployment=p.OPENAI_API_DEPLOYMENT_ADA,
-#                                        chunk_size=16)
-# elif p.OPENAI_API_TYPE == "openai":
-#     chatllm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-16k")
-#     #embeddings = FakeEmbeddings(size=1352)
-# elif p.OPENAI_API_TYPE == "nvidia":
-#     pass
-#     #chatllm = ChatNVIDIA(model="mixtral_8x7b",temperature=0)
-#     #embeddings = NVIDIAEmbeddings(model="nvolveqa_40k")
-# elif p.OPENAI_API_TYPE == "local":
-# chatllm = OllamaFunctions(model=p.OLLAMA_BASE_MODEL,
-#                           base_url=p.OLLAMA_BASE_URL,
-#                           request_timeout=1800,
-#                           format="json")
-# embeddings = OllamaEmbeddings(model=p.OLLAMA_BASE_MODEL,
-#                               base_url=p.OLLAMA_BASE_URL)
-# embeddings = AzureOpenAIEmbeddings(deployment=p.OPENAI_API_DEPLOYMENT_ADA,
-#                                    chunk_size=16)
-
-# key_id = "sk-6FUP6K8TWIxOQMxNGHt30w"
-# os.environ["OPENAI_API_KEY"] =key_id # 👈 Team's Key
-
-# model_name = "llava_test"
-
-# chatllm =ChatOpenAI(
-#     openai_api_base="http://127.0.0.1:4000",
-#     api_key = "sk-1234",
-#     model = model_name,
-#     temperature=0.1,
-# )
 
 class CustomLiteLLM(ChatLiteLLM):
     """Override the default LiteLLM model to allow setting infinity max_tokens"""

@@ -10,46 +10,6 @@ from streamlit_float import float_init
 float_init()
 
 
-# async def retrieve_bot_response(text, image):
-#     async with websockets.connect(
-#             "ws://192.168.208.1:8000/api/v1/chat/tools") as websocket:
-#         message_data = {"message": text, "image": image}
-#         json_data = json.dumps(message_data)
-#         last_response = ""
-#         stream_data = ""
-#         print("stream_data start", stream_data)
-#         await websocket.send(json_data)
-#         counter = 0
-#         stream_str = ""
-#         last_response = ""
-#         # with st.empty():
-#         with st.empty() as placeholder:
-
-#             try:
-#                 # 收到第一個訊息後，回延遲；之後才回復
-#                 while True:
-#                     counter += 1
-#                     response = await asyncio.wait_for(websocket.recv(),
-#                                                       timeout=36000)
-#                     response = json.loads(response)
-#                     print(f'response:{response}')
-
-#                     # if "error" in response:
-#                     #     stream_data = response["error"]
-#                     #     break
-#                     # if response["response"] == "":
-#                     #     break
-#                     placeholder.text(response)
-#                     last_response = response
-#                     # stream_data = st.write(stream_str)
-#             except asyncio.TimeoutError:
-#                 # st.warning("Connection timed out. Closing the connection.")
-#                 print("Connection timed out. Closing the connection.")
-#         # print("stream_data", stream_data, type(stream_data))
-
-#         # return last_response if stream_data in ["", None, "None"
-#         #                                         ] else stream_data
-#         return last_response
 async def retrieve_bot_response(text, image):
     #
     # WS_PATH = "ws://192.168.208.1:8000/api/v1/chat/tools"
