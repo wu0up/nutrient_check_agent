@@ -26,6 +26,8 @@ router = APIRouter()
 
 @router.websocket("/tools")
 async def websocket_endpoint(websocket: WebSocket):
+    origin = websocket.headers.get('origin')
+    print(f"Origin: {origin}")  # Debug
     await websocket.accept()
 
     async def process_data(data):
